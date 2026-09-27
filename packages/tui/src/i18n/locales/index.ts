@@ -64,6 +64,28 @@ export function localeStatus(locale: SupportedLocale): LocaleStatus {
   return STATUS[locale]
 }
 
+/**
+ * Endonyms: each language is listed in its own script.
+ *
+ * A reader who cannot read the current interface language still finds their own
+ * in the list, which a translated name would hide from them. These are therefore
+ * not translatable copy and deliberately live outside the catalog.
+ */
+export const LOCALE_ENDONYMS: Readonly<Record<SupportedLocale, string>> = {
+  en: 'English',
+  'zh-Hans': '简体中文',
+  fr: 'Français',
+  es: 'Español',
+  de: 'Deutsch',
+  'pt-BR': 'Português (Brasil)',
+  it: 'Italiano',
+  nl: 'Nederlands',
+  pl: 'Polski',
+  ru: 'Русский',
+  ja: '日本語',
+  ko: '한국어',
+}
+
 export function isLocaleComplete(locale: SupportedLocale): boolean {
   return STATUS[locale] === 'complete'
 }

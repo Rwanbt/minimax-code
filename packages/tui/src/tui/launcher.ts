@@ -62,6 +62,7 @@ import {
   readTuiModeSetting,
   readTuiThemeSetting,
   writeTuiModeSetting,
+  writeTuiLocaleSetting,
   writeTuiThemeSetting,
 } from '../host/tui-settings.js';
 import { schedulePendingMcodePrefixUpdate } from '../update/prefix-update.js';
@@ -411,6 +412,7 @@ export async function launchTui(
         terminal,
         tuiMode,
         persistTuiMode: (mode) => (dependencies.writeTuiMode ?? writeTuiModeSetting)(dataDir, mode),
+        persistTuiLocale: (preference) => writeTuiLocaleSetting(dataDir, preference),
         ...(theme ? { theme } : {}),
         persistTheme: (value) =>
           (dependencies.writeTuiTheme ?? writeTuiThemeSetting)(dataDir, value),

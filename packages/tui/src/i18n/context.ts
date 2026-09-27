@@ -9,7 +9,36 @@ import { resolveLocale } from './locale.js';
  * the user switches language, without a restart. This module is the single
  * source of truth for "what locale are we in right now".
  */
-type LocaleListener = (locale: SupportedLocale) => void;
+type LocaleListener = (locale: SupportedLocale) => void
+
+/**
+ * Extra invalidation hooks registered by consumers that memoise locale-derived
+ * data outside the catalog — the slash-command sets, for instance. They live
+ * here rather than in `translate.ts` so the i18n domain does not have to know
+ * about the command catalog, and the catalog does not have to be imported by the
+ * i18n domain.
+ */
+type InvalidationHook = () => void
+
+const invalidationHooks = new Set<InvalidationHook>()
+
+/** Register a callback invoked whenever the active locale changes. Returns an unsubscribe. */
+export function onLocaleChanged(hook: InvalidationHook): () => void {
+  invalidationHooks.add(hook)
+  return () => {
+    invalidationHooks.delete(hook)
+  }
+}
+
+function runInvalidationHooks(): void {
+  for (const hook of [...invalidationHooks]) {
+    try {
+      hook()
+    } catch {
+      // A failing hook must not abort the language switch.
+    }
+  }
+};
 
 let activeLocale: SupportedLocale = DEFAULT_LOCALE;
 let override: string | null = null;
@@ -30,6 +59,19 @@ function ensureInitialized(): void {
   activeLocale = compute();
 }
 
+/** Notify subscribers, then let dependent caches drop what they derived. */
+function notify(): void {
+  for (const listener of [...listeners]) {
+    try {
+      listener(activeLocale);
+    } catch {
+      // A misbehaving subscriber must not abort the language switch for the
+      // rest of the interface.
+    }
+  }
+  runInvalidationHooks();
+}
+
 export function getActiveLocale(): SupportedLocale {
   ensureInitialized();
   return activeLocale;
@@ -44,14 +86,7 @@ export function setActiveLocale(locale: SupportedLocale): boolean {
   override = locale;
   if (activeLocale === locale) return false;
   activeLocale = locale;
-  for (const listener of [...listeners]) {
-    try {
-      listener(locale)
-    } catch {
-      // A misbehaving subscriber must not abort the language switch for the
-      // rest of the interface.
-    }
-  }
+  notify();
   return true;
 }
 
@@ -62,44 +97,28 @@ export function setActiveLocale(locale: SupportedLocale): boolean {
 export function resetActiveLocale(): void {
   override = null;
   activeLocale = compute();
-  for (const listener of [...listeners]) {
-    try {
-      listener(activeLocale)
-    } catch {
-      // Same rationale as setActiveLocale.
-    }
-  }
+  notify();
 }
 
 export function setLocaleConfigPreference(preference: string | null): void {
-  configPreference = preference
-  if (override) return
-  const next = compute()
-  if (next === activeLocale) return
-  activeLocale = next
-  for (const listener of [...listeners]) {
-    try {
-      listener(next)
-    } catch {
-      // Same rationale as setActiveLocale.
-    }
-  }
+  configPreference = preference;
+  if (override) return;
+  const next = compute();
+  if (next === activeLocale) return;
+  activeLocale = next;
+  notify();
 }
 
 /** Test seam: pin the environment without mutating `process.env`. */
-export function setLocaleEnvironment(env: Readonly<Record<string, string | undefined>> | undefined): void {
-  envOverride = env
-  if (override) return
-  const next = compute()
-  if (next === activeLocale) return
-  activeLocale = next
-  for (const listener of [...listeners]) {
-    try {
-      listener(next)
-    } catch {
-      // Same rationale as setActiveLocale.
-    }
-  }
+export function setLocaleEnvironment(
+  env: Readonly<Record<string, string | undefined>> | undefined,
+): void {
+  envOverride = env;
+  if (override) return;
+  const next = compute();
+  if (next === activeLocale) return;
+  activeLocale = next;
+  notify();
 }
 
 export function subscribeLocaleChange(listener: LocaleListener): () => void {

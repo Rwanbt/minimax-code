@@ -1,6 +1,7 @@
 import { parsePluginMentions } from '@mavis/shared/plugin-mention';
 import {
   createTuiCommandCatalog,
+  defaultCommandTranslator,
   matchTuiCommandInput,
   type TuiCommandCatalog,
   type TuiCommandContribution,
@@ -12,6 +13,10 @@ import type { TuiWorkspaceRoots } from '../../features/composer/workspace-roots.
 import { TuiLoginRegionPicker } from '../../features/auth/login-region-picker.js';
 import { TuiPermissionModePicker } from '../../features/interaction/permission-mode-picker.js';
 import { TuiSettingsPicker } from '../../features/settings/picker.js';
+import { TuiLanguagePicker } from '../../features/settings/language-picker.js';
+import { LOCALE_ENDONYMS } from '../../../i18n/locales/index.js';
+import { getActiveLocale, resetActiveLocale, setActiveLocale } from '../../../i18n/context.js';
+import type { LocalePreference } from '../../../i18n/schema.js';
 import { TuiHotkeysPicker } from '../../features/settings/hotkeys-picker.js';
 import { submittedEditorContent, submittedEditorTransport, type Editor } from '../../widgets/editor/editor.js';
 import type { TuiInteractionSurface } from '../../shell/interaction-surface.js';
@@ -93,6 +98,8 @@ export interface TuiCommandFlowOptions {
   readonly showStatusLine?: () => void;
   readonly showTheme?: () => void;
   readonly persistTuiMode?: (mode: TuiMode) => void;
+  /** Persist the interface language choice. `system` means follow the environment. */
+  readonly persistTuiLocale?: (preference: LocalePreference) => void;
   readonly queueEnabled: boolean;
   readonly liveRunId: () => string | undefined;
   readonly runtimeStopping: () => boolean;
@@ -180,8 +187,11 @@ export class TuiCommandFlow {
   constructor(private readonly options: TuiCommandFlowOptions) {
     this.openExternalTarget =
       options.openExternalTarget ?? createTuiExternalTargetOpener(options.workspaceDir);
-    this.catalog = createTuiCommandCatalog(options.contributions, this.createHandlers(), () =>
-      this.commandContext(),
+    this.catalog = createTuiCommandCatalog(
+      defaultCommandTranslator,
+      options.contributions,
+      this.createHandlers(),
+      () => this.commandContext(),
     );
   }
 
@@ -1635,9 +1645,61 @@ export class TuiCommandFlow {
         this.options.surface.close(picker);
         if (this.settingsPicker === picker) this.settingsPicker = undefined;
       },
+      () => this.showLanguagePicker(picker),
+      () => this.currentLocaleLabel(),
     );
     this.settingsPicker = picker;
     this.options.surface.show(picker);
+  }
+
+  /** The language the interface is actually running in, for the settings row. */
+  private currentLocaleLabel(): string {
+    return LOCALE_ENDONYMS[getActiveLocale()];
+  }
+
+  /**
+   * Language picker.
+   *
+   * The switch is immediate: `setActiveLocale` invalidates the catalog cache and
+   * the format caches through the i18n context, and a full render follows, so the
+   * user sees the new language on the same screen rather than after a restart.
+   */
+  private showLanguagePicker(parent: TuiSettingsPicker): void {
+    const picker = new TuiLanguagePicker(
+      (preference) => {
+        try {
+          this.options.persistTuiLocale?.(preference);
+        } catch (error) {
+          this.options.append(
+            formatTuiActionFailure(error, {
+              summary: "Couldn't save the interface language.",
+              nextStep: 'Check the MCode data directory permissions, then retry /settings.',
+              preservation: 'The interface language is unchanged.',
+            }),
+            'warning',
+          );
+          this.options.onChanged();
+          return false;
+        }
+
+        // `system` drops the override so resolution falls through to the
+        // environment again, which is what the user asked for.
+        if (preference === 'system') resetActiveLocale();
+        else setActiveLocale(preference);
+
+        // Full re-render: panels that cached locale-derived text must be rebuilt,
+        // not repainted.
+        this.options.setHint(`Language: ${this.currentLocaleLabel()}`);
+        this.options.onChanged();
+        return true;
+      },
+      () => {
+        this.options.surface.close(picker);
+      },
+      'system',
+    );
+    this.options.surface.show(picker);
+    void parent;
   }
 
   private showHotkeysPicker(): void {

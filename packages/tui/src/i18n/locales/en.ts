@@ -7,6 +7,17 @@
  */
 
 export const EN_CATALOG = {
+  'command.help.description': 'Show available commands',
+  'command.new.description': 'Start a fresh session in the current workspace',
+  'command.model.description': 'Choose a model',
+  'command.status.description': 'Show account and model status',
+  'command.doctor.description': 'Check the local config file',
+  'command.context.description': 'Show the Runtime-owned context snapshot',
+  'command.skills.description': 'List built-in and user Skills',
+  'command.mcp.description': 'Inspect MCP capabilities and project configuration',
+  'command.usage.description': 'Show session usage',
+  'command.compact.description': 'Shorten the active conversation',
+  'command.export.description': 'Export the current Session as Markdown',
   'composer.image.loading': 'Loading preview…',
   'composer.image.unavailable': 'Preview unavailable · attachment is still ready to send',
   'composer.image.unsupported': 'Image preview is not supported by this terminal',

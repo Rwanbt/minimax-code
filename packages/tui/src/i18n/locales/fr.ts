@@ -10,6 +10,17 @@ import type { MessageKey } from './en.js'
  */
 
 export const FR_CATALOG = {
+  'command.help.description': 'Afficher les commandes disponibles',
+  'command.new.description': 'Démarrer une nouvelle Session dans cet espace de travail',
+  'command.model.description': 'Choisir un modèle',
+  'command.status.description': 'Afficher l\'état du compte et du modèle',
+  'command.doctor.description': 'Inspecter le fichier de configuration local',
+  'command.context.description': 'Afficher l\'instantané de contexte du Runtime',
+  'command.skills.description': 'Lister les Skill intégrées et utilisateur',
+  'command.mcp.description': 'Inspecter les capacités MCP et la configuration du projet',
+  'command.usage.description': 'Afficher l\'utilisation de la Session',
+  'command.compact.description': 'Résumer la conversation active',
+  'command.export.description': 'Exporter la Session courante en Markdown',
   'composer.image.loading': 'Chargement de l\'aperçu…',
   'composer.image.unavailable': 'Aperçu indisponible · la pièce jointe reste prête à envoyer',
   'composer.image.unsupported': 'Ce terminal ne gère pas l\'aperçu des images',

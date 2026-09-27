@@ -12,6 +12,8 @@ import {
   subscribeLocaleChange,
 } from '../../src/i18n/context.js';
 import { pseudoLocalize, pseudoCatalog } from '../../src/i18n/pseudo-locale.js';
+import { getTuiCommands } from '../../src/tui/commands/catalog.js';
+import type { SupportedLocale } from '../../src/i18n/schema.js';
 import { findForbiddenCharacters, isPluralMessage, requiredPluralCategories } from '../../src/i18n/schema.js';
 import { ELLIPSIS } from '../../src/i18n/format.js';
 
@@ -284,3 +286,60 @@ describe('fallback across locales', () => {
     expect(t('composer.placeholder')).toBe(english)
   })
 });
+
+// ── the hot-swap proof ──────────────────────────────────────────────────────
+
+describe('slash-command catalog follows the active locale', () => {
+  /**
+   * This is the reason the command catalog was refactored. The exported command
+   * list used to be a module-level const built from a table of English strings,
+   * so the interface language was fixed at import time and no amount of switching
+   * could change it. These assertions are the regression guard for that.
+   */
+  const descriptionOf = (name: string, locale: SupportedLocale): string => {
+    const command = getTuiCommands(locale).find((candidate) => candidate.name === name)
+    expect(command, `command /${name} is missing`).toBeDefined()
+    return command?.description ?? ''
+  }
+
+  it('renders the same command differently per locale', () => {
+    expect(descriptionOf('help', 'en')).toBe('Show available commands')
+    expect(descriptionOf('help', 'fr')).toBe('Afficher les commandes disponibles')
+  })
+
+  it('falls back to English for a draft locale with no translations', () => {
+    expect(descriptionOf('help', 'es')).toBe(descriptionOf('help', 'en'))
+  })
+
+  it('keeps command names invariant across locales', () => {
+    // Users type the names, and scripts and agent prompts embed them.
+    const englishNames = getTuiCommands('en').map((command) => command.name)
+    const frenchNames = getTuiCommands('fr').map((command) => command.name)
+    expect(frenchNames).toEqual(englishNames)
+  })
+
+  it('switches without a restart: EN -> FR -> JA -> EN', () => {
+    const helpEnglish = descriptionOf('help', 'en')
+    const helpFrench = descriptionOf('help', 'fr')
+
+    setActiveLocale('fr')
+    expect(getTuiCommands().find((c) => c.name === 'help')?.description).toBe(helpFrench)
+
+    // Japanese is a draft with an empty catalog, so it must serve English rather
+    // than stale French: a switch has to be able to move in both directions.
+    setActiveLocale('ja')
+    expect(getTuiCommands().find((c) => c.name === 'help')?.description).toBe(helpEnglish)
+
+    setActiveLocale('en')
+    expect(getTuiCommands().find((c) => c.name === 'help')?.description).toBe(helpEnglish)
+  })
+
+  it('drops its memoised catalogs when the locale changes', () => {
+    setActiveLocale('en')
+    const first = getTuiCommands()
+    setActiveLocale('fr')
+    setActiveLocale('en')
+    // A fresh object per switch, otherwise the second one would return French text.
+    expect(getTuiCommands()).not.toBe(first)
+  })
+})

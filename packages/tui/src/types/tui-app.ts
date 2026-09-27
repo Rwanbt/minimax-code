@@ -10,6 +10,7 @@ import type { ClipboardImageReader } from '../tui/features/composer/clipboard-im
 import type { TuiCommandContribution } from '../tui/commands/catalog.js';
 import type { TuiChatController } from '../tui/controller/chat-controller.js';
 import type { TuiUpdateOptions } from '../tui/controller/product/update-flow.js';
+import type { LocalePreference } from '../i18n/schema.js';
 import type { Terminal, TUI, TuiMode } from '../tui/engine/public.js';
 import type { TuiProductFeatures } from '../tui/product-features.js';
 import type { TuiInlinePanelHost, TuiSurfaceHost, TuiSurface } from '../tui/shell/index.js';
@@ -38,6 +39,8 @@ export interface CreateTuiAppOptions extends TuiUpdateOptions {
   terminalCapabilities?: TerminalCapabilities;
   tuiMode?: TuiMode;
   persistTuiMode?: (mode: TuiMode) => void;
+  /** Persist the interface language. `system` means follow the environment. */
+  persistTuiLocale?: (preference: LocalePreference) => void;
   /** Saved theme selection, e.g. `aurora` or `aurora/dark`. */
   theme?: string;
   persistTheme?: (theme: string) => void;

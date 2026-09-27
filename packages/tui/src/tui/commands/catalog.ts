@@ -3,6 +3,9 @@ import { fuzzyFilter } from '../engine/public.js';
 import { TuiContributionRegistry } from '../../contributions/index.js';
 import { TUI_COMMAND_DESCRIPTORS } from '../../application/command-descriptors.js';
 import { sessionHistoryText, sessionMutationText } from '../features/session-mutation/copy.js';
+import { getActiveLocale, onLocaleChanged } from '../../i18n/context.js';
+import { t } from '../../i18n/translate.js';
+import type { MessageKey, SupportedLocale } from '../../i18n/locales/index.js';
 
 export type TuiCommandCategory =
   | 'Session'
@@ -71,6 +74,12 @@ export interface TuiCommand {
   inputWhen?: (context: TuiCommandContext) => boolean;
   unavailableReason?: string;
   /**
+   * Catalog key for the description. When present it wins over the English `description`,
+   * so one source renders in any locale. Added per command as the extraction batches
+   * migrate; until then the inline English text is used verbatim.
+   */
+  descriptionKey?: MessageKey;
+  /**
    * Syntax shown after the command name. Its presence also declares that the
    * command accepts non-whitespace text after its token; commands without a
    * hint are exact-token commands.
@@ -83,7 +92,20 @@ export interface TuiCommand {
   composerTemplate: string;
 }
 
-export type TuiCommandSource = Omit<TuiCommand, 'usage' | 'composerTemplate'>;
+export type TuiCommandTranslator = (key: MessageKey) => string;
+
+/** Resolves against the single active locale, so a language switch is picked up. */
+export const defaultCommandTranslator: TuiCommandTranslator = (key) => t(key);
+
+/**
+ * The source table may omit `description` when it carries a `descriptionKey`;
+ * the materialized command always has one. Keeping the difference here is what
+ * lets an unmigrated command keep its English text while a migrated one
+ * resolves per locale.
+ */
+export type TuiCommandSource = Omit<TuiCommand, 'usage' | 'composerTemplate' | 'description'> & {
+  readonly description?: string;
+};
 
 export interface TuiCommandInvocation {
   raw: string;
@@ -118,7 +140,15 @@ export interface TuiCommandContribution {
   readonly execute?: TuiCommandHandler;
 }
 
-// Built-in command metadata uses English consistently, independent of the system locale.
+// Built-in command metadata.
+//
+// `description` is the English source text; `descriptionKey`, where present, points at the
+// catalog entry that replaces it. Resolution happens in `materializeCommand`, not here,
+// because this table is a module-level const evaluated at import time — a `t()` call in
+// this file would fix the language for the whole process before the user could pick one.
+//
+// Command names and aliases stay English: users type them, and scripts and agent prompts
+// embed them. Descriptions, categories and reasons are translated.
 const COMMAND_SOURCES: readonly TuiCommandSource[] = [
   {
     ...TUI_COMMAND_DESCRIPTORS.help,
@@ -549,6 +579,7 @@ const EMPTY_COMMAND_CONTEXT: TuiCommandContext = {
 };
 
 export function createTuiCommandCatalog(
+  translator: TuiCommandTranslator = defaultCommandTranslator,
   contributions: readonly TuiCommandContribution[] = [],
   handlers: Readonly<Partial<Record<string, TuiCommandHandler>>> = {},
   context: () => TuiCommandContext = () => EMPTY_COMMAND_CONTEXT,
@@ -577,10 +608,10 @@ export function createTuiCommandCatalog(
   const names = new Set<string>();
   const commands = registeredContributions
     .filter((contribution) => (contribution.kind ?? 'command') === 'command')
-    .map((contribution) => materializeCommand(contribution.source, names));
+    .map((contribution) => materializeCommand(contribution.source, names, translator));
   const activeRunCommands = registeredContributions
     .filter((contribution) => contribution.kind === 'active-run')
-    .map((contribution) => materializeCommand(contribution.source, names));
+    .map((contribution) => materializeCommand(contribution.source, names, translator));
   const inputCommandNames = new Set(
     registeredContributions
       .filter(
@@ -630,7 +661,7 @@ export function createTuiCommandCatalog(
       const command = commands.find((candidate) => candidate.name === invocation.command.name);
       const currentContext = context();
       const resolvedCommand =
-        command ?? materializeCommand(invocation.contribution.source, new Set());
+        command ?? materializeCommand(invocation.contribution.source, new Set(), translator);
       if (
         resolvedCommand.audience !== 'internal' &&
         !isTuiCommandAllowedInSideMode(resolvedCommand, currentContext)
@@ -715,7 +746,11 @@ export function matchTuiCommandInput<TCommand extends TuiCommandInputDescriptor>
   return { source, raw, token, args };
 }
 
-function materializeCommand(source: TuiCommandSource, names: Set<string>): TuiCommand {
+function materializeCommand(
+  source: TuiCommandSource,
+  names: Set<string>,
+  translator: TuiCommandTranslator = defaultCommandTranslator,
+): TuiCommand {
   const normalizedNames = [source.name, ...(source.aliases ?? [])].map((name) =>
     name.toLocaleLowerCase(),
   );
@@ -726,6 +761,15 @@ function materializeCommand(source: TuiCommandSource, names: Set<string>): TuiCo
   const usage = `/${source.name}${source.argumentHint ? ` ${source.argumentHint}` : ''}`;
   return {
     ...source,
+    // A key wins over the inline English text. A command whose key is absent keeps its
+    // source text, which is what the not-yet-migrated batches rely on.
+    // A key wins over the inline English text. A command whose key is absent keeps
+    // its source text, which is what the not-yet-migrated batches rely on. A source
+    // carrying neither is a programming error, so fall back to something visible
+    // rather than rendering `undefined` in the help panel.
+    description: source.descriptionKey
+      ? translator(source.descriptionKey)
+      : (source.description ?? source.name),
     usage,
     composerTemplate: `/${source.name}${source.argumentHint ? ' ' : ''}`,
   };
@@ -772,13 +816,49 @@ export function isTuiCommandAvailable(command: TuiCommand, context: TuiCommandCo
   return command.visibleWhen?.(context) ?? true;
 }
 
-const DEFAULT_COMMAND_CATALOG = createTuiCommandCatalog();
+/**
+ * Per-locale command sets.
+ *
+ * These used to be `const`s built once at module load, which froze the interface language
+ * before the user could choose one. They are now built per locale and memoised, so a
+ * language switch produces different text without a restart. The cache is keyed by locale
+ * and bounded by the number of shipped locales.
+ */
+const commandSetsCache = new Map<SupportedLocale, TuiCommandCatalog>();
 
-export const MINIMAX_CODE_COMMANDS: readonly TuiCommand[] = DEFAULT_COMMAND_CATALOG.commands;
-export const MINIMAX_CODE_ACTIVE_RUN_COMMANDS: readonly TuiCommand[] =
-  DEFAULT_COMMAND_CATALOG.activeRunCommands;
-export const MINIMAX_CODE_DISCOVERABLE_COMMANDS: readonly TuiCommand[] =
-  DEFAULT_COMMAND_CATALOG.discoverableCommands;
+function commandCatalogFor(locale: SupportedLocale): TuiCommandCatalog {
+  const cached = commandSetsCache.get(locale);
+  if (cached) return cached;
+  const translator: TuiCommandTranslator = (key) => t(key, locale);
+  const catalog = createTuiCommandCatalog(translator);
+  commandSetsCache.set(locale, catalog);
+  return catalog;
+}
+
+/** Drop the memoised catalogs. Called on a locale change and by tests. */
+export function invalidateCommandCatalogCache(): void {
+  commandSetsCache.clear();
+}
+
+// A language switch must not leave stale command text behind. Registering here
+// rather than inside the i18n domain keeps the dependency pointing one way.
+onLocaleChanged(invalidateCommandCatalogCache);
+
+export function getTuiCommands(locale: SupportedLocale = getActiveLocale()): readonly TuiCommand[] {
+  return commandCatalogFor(locale).commands;
+}
+
+export function getTuiActiveRunCommands(
+  locale: SupportedLocale = getActiveLocale(),
+): readonly TuiCommand[] {
+  return commandCatalogFor(locale).activeRunCommands;
+}
+
+export function getTuiDiscoverableCommands(
+  locale: SupportedLocale = getActiveLocale(),
+): readonly TuiCommand[] {
+  return commandCatalogFor(locale).discoverableCommands;
+}
 
 export function formatTuiCommandUsage(command: TuiCommand): string {
   const aliases = command.aliases?.join(', ');

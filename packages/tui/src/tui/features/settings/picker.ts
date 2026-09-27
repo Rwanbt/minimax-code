@@ -14,6 +14,16 @@ const TUI_MODE_DESCRIPTIONS: Record<TuiMode, string> = {
   fullscreen: 'Keeps MCode in a fixed viewport with in-app scrolling.',
 };
 
+/**
+ * Rows of the settings list, in navigation order.
+ *
+ * A flat list rather than nested navigation: the picker stays a single-select
+ * list, and the language row hands over to its own picker. The last row is the
+ * language, so `LANGUAGE_ROW` is `TUI_MODES.length`.
+ */
+const LANGUAGE_ROW = TUI_MODES.length;
+const ROW_COUNT = TUI_MODES.length + 1;
+
 export class TuiSettingsPicker implements Component {
   private selectedIndex: number;
 
@@ -21,6 +31,8 @@ export class TuiSettingsPicker implements Component {
     private currentMode: TuiMode,
     private readonly onTuiModeChange: (mode: TuiMode) => boolean,
     private readonly onClose: () => void,
+    private readonly onOpenLanguage: () => void = () => this.onClose(),
+    private readonly languageLabel: () => string = () => 'Automatic (system)',
   ) {
     this.selectedIndex = TUI_MODES.indexOf(currentMode);
   }
@@ -28,14 +40,20 @@ export class TuiSettingsPicker implements Component {
   handleInput(data: string): void {
     const keybindings = getKeybindings();
     if (keybindings.matches(data, 'tui.select.up')) {
-      this.selectedIndex = this.selectedIndex === 0 ? TUI_MODES.length - 1 : this.selectedIndex - 1;
+      this.selectedIndex = this.selectedIndex === 0 ? ROW_COUNT - 1 : this.selectedIndex - 1;
       return;
     }
     if (keybindings.matches(data, 'tui.select.down')) {
-      this.selectedIndex = (this.selectedIndex + 1) % TUI_MODES.length;
+      this.selectedIndex = (this.selectedIndex + 1) % ROW_COUNT;
       return;
     }
     if (keybindings.matches(data, 'tui.select.confirm')) {
+      // The language row hands over instead of applying inline: choosing it is a
+      // navigation decision, not a value change.
+      if (this.selectedIndex === LANGUAGE_ROW) {
+        this.onOpenLanguage();
+        return;
+      }
       const selectedMode = TUI_MODES[this.selectedIndex];
       if (!selectedMode || selectedMode === this.currentMode) {
         this.onClose();
@@ -79,6 +97,12 @@ export class TuiSettingsPicker implements Component {
               width: contentWidth,
             }),
           ),
+          '',
+          ...renderLanguageRow(this.languageLabel(), {
+            focused: this.selectedIndex === LANGUAGE_ROW,
+            compact,
+            width: contentWidth,
+          }),
         ],
         footer:
           safeWidth < 42 ? '↑/↓ move · Enter · Esc close' : '↑/↓ select · Enter apply · Esc cancel',
@@ -113,6 +137,25 @@ function renderMode(
     ];
   }
   return [fitWithRightMeta(`${heading}  ${description}`, status, options.width)];
+}
+
+function renderLanguageRow(
+  label: string,
+  options: {
+    readonly focused: boolean;
+    readonly compact: boolean;
+    readonly width: number;
+  },
+): string[] {
+  const prefix = options.focused ? chalk.bold.hex(colors.signal)('›') : ' ';
+  const name = (options.focused ? chalk.bold.hex(colors.signal) : chalk.hex(colors.text))('Language');
+  const value = chalk.hex(colors.muted)(label);
+  const heading = `${prefix} ${name}  ${value}`;
+
+  if (options.compact) {
+    return [truncateToWidth(`${prefix} ${name}`, options.width, ''), truncateToWidth(`  ${value}`, options.width, '')];
+  }
+  return [truncateToWidth(heading, options.width, '')];
 }
 
 function formatTuiMode(mode: TuiMode): string {

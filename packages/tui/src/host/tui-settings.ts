@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { TuiMode } from '../tui/engine/public.js';
+import { isSupportedLocale, type LocalePreference } from '../i18n/schema.js';
 
 const TUI_SETTINGS_FILE = path.join('tui', 'tui-settings.json');
 const LEGACY_TUI_SETTINGS_FILE = 'tui-settings.json';
@@ -9,6 +10,7 @@ const THEME_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/iu;
 interface TuiSettingsDocument {
   readonly tuiMode?: unknown;
   readonly theme?: unknown;
+  readonly locale?: unknown;
 }
 
 function settingsPath(dataDir: string): string {
@@ -38,6 +40,7 @@ function writeDocument(dataDir: string, patch: TuiSettingsDocument): void {
   const next: Record<string, unknown> = { ...readDocument(dataDir), ...patch };
   if (next.tuiMode === undefined) delete next.tuiMode;
   if (next.theme === undefined) delete next.theme;
+  if (next.locale === undefined) delete next.locale;
   const temporaryPath = path.join(directory, `.tui-settings.json.${process.pid}.${Date.now()}.tmp`);
   writeFileSync(temporaryPath, `${JSON.stringify(next, null, 2)}\n`, {
     encoding: 'utf8',
@@ -52,6 +55,27 @@ export function readTuiModeSetting(dataDir: string): TuiMode {
 
 export function writeTuiModeSetting(dataDir: string, mode: TuiMode): void {
   writeDocument(dataDir, { tuiMode: mode });
+}
+
+/**
+ * Saved interface language.
+ *
+ * `system` is the default and means "follow the environment"; a concrete locale
+ * is stored as-is. A stored value this build cannot serve resolves to `system`
+ * rather than erroring, so downgrading a build never leaves the interface stuck
+ * on a language it no longer ships.
+ */
+export function readTuiLocaleSetting(dataDir: string): LocalePreference {
+  const value = readDocument(dataDir).locale;
+  if (value === 'system') return 'system';
+  return isSupportedLocale(value) ? value : 'system';
+}
+
+export function writeTuiLocaleSetting(dataDir: string, preference: LocalePreference): void {
+  if (preference !== 'system' && !isSupportedLocale(preference)) {
+    throw new Error(`"${preference}" is not a supported interface locale`);
+  }
+  writeDocument(dataDir, { locale: preference });
 }
 
 /**

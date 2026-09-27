@@ -643,6 +643,7 @@ export function createTuiApp(options: CreateTuiAppOptions): TuiApp {
     surfaceHost,
     showTasks: () => delegationFlow.showTasks(),
     persistTuiMode: options.persistTuiMode,
+    persistTuiLocale: options.persistTuiLocale,
     showStatusLine: () =>
       showTuiStatusLineSetup({
         statusLine: status,

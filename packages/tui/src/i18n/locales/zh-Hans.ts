@@ -8,6 +8,17 @@ import type { MessageKey } from './en.js'
  */
 
 export const ZH_HANS_CATALOG = {
+  'command.help.description': '显示可用命令',
+  'command.new.description': '在当前工作区开始新会话',
+  'command.model.description': '选择模型',
+  'command.status.description': '查看账号和模型状态',
+  'command.doctor.description': '检查本地配置文件',
+  'command.context.description': '查看 Runtime 管理的上下文快照',
+  'command.skills.description': '列出内置和用户 Skill',
+  'command.mcp.description': '检查 MCP 能力和项目配置',
+  'command.usage.description': '查看会话用量',
+  'command.compact.description': '压缩当前对话',
+  'command.export.description': '将当前 Session 导出为 Markdown',
   'composer.image.loading': '正在加载预览…',
   'composer.image.unavailable': '无法预览 · 附件仍可发送',
   'composer.image.unsupported': '当前终端不支持显示图片预览',

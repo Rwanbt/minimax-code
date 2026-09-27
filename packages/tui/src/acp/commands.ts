@@ -1,45 +1,43 @@
 import * as acp from '@agentclientprotocol/sdk';
 
-import { TUI_COMMAND_DESCRIPTORS } from '../application/command-descriptors.js';
+import { TUI_COMMAND_DESCRIPTORS, type TuiCommandDescriptor } from '../application/command-descriptors.js';
+import { t } from '../i18n/translate.js';
 import { sanitizeTerminalText } from '../tui/rendering/terminal-text.js';
 import type { TuiModel, TuiSkillList } from '../runtime/port.js';
 import type { TuiAcpRuntime } from './runtime.js';
 
+/**
+ * R8: ACP is outside the TUI i18n scope, so this payload stays English on
+ * purpose — the protocol permits translated text, but these values reach
+ * third-party clients and are asserted by tests, which makes it a
+ * compatibility decision rather than a mechanical one.
+ *
+ * The resolution is explicit rather than implicit: it pins the locale here so a
+ * later change to the default cannot silently start translating a wire payload.
+ * `descriptionKey` is also dropped: it is a TUI concept and has no meaning on
+ * the ACP side.
+ */
+function acpCommand(descriptor: TuiCommandDescriptor, extra?: Partial<acp.AvailableCommand>) {
+  return {
+    ...extra,
+    name: descriptor.name,
+    description: t(descriptor.descriptionKey, 'en'),
+  };
+}
+
 export const TUI_ACP_AVAILABLE_COMMANDS = [
-  {
-    ...TUI_COMMAND_DESCRIPTORS.help,
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.new,
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.model,
+  acpCommand(TUI_COMMAND_DESCRIPTORS.help),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.new),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.model, {
     input: { hint: '[provider/model[#variant]]' },
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.status,
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.doctor,
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.context,
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.skills,
-    input: { hint: '[filter]' },
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.mcp,
-    input: { hint: '[filter]' },
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.usage,
-  },
-  {
-    ...TUI_COMMAND_DESCRIPTORS.compact,
-    input: { hint: '[instructions]' },
-  },
+  }),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.status),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.doctor),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.context),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.skills, { input: { hint: '[filter]' } }),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.mcp, { input: { hint: '[filter]' } }),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.usage),
+  acpCommand(TUI_COMMAND_DESCRIPTORS.compact, { input: { hint: '[instructions]' } }),
 ] satisfies readonly acp.AvailableCommand[];
 
 /** Keep native commands authoritative and expose only invocable Skill names. */
@@ -343,7 +341,7 @@ function formatAvailableCommands(): string {
   return [
     'Available commands:',
     ...TUI_ACP_AVAILABLE_COMMANDS.map((command) => {
-      const input = 'input' in command && command.input.hint ? ` ${command.input.hint}` : '';
+      const input = 'input' in command && command.input?.hint ? ` ${command.input.hint}` : '';
       return `- /${command.name}${input} — ${command.description}`;
     }),
   ].join('\n');

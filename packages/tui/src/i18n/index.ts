@@ -74,6 +74,7 @@ export type { PseudoCatalog } from './pseudo-locale.js';
 
 export {
   LOCALES,
+  LOCALE_ENDONYMS,
   localeStatus,
   isLocaleComplete,
   userSelectableLocales,
