@@ -44,6 +44,22 @@ export interface TuiConfig {
   /** Show contextual Tips in the idle composer header. Defaults to true. */
   showTips?: boolean;
   /**
+   * Interface language, as a BCP 47 tag, or the literal `system` to follow the
+   * environment.
+   *
+   * Stored as an unvalidated string on purpose: this package must not depend on
+   * the TUI's locale table, or the dependency would point both ways. The TUI
+   * negotiates the tag against the locales its build actually ships and falls
+   * back to English for anything it cannot serve — including a valid tag whose
+   * variant is deliberately not translated.
+   *
+   * Resolution order lives in `packages/tui/src/i18n/locale.ts`:
+   * process override, then this value, then `MCODE_LOCALE`,
+   * `MAVIS_ELECTRON_LOCALE`, `LC_ALL`, `LC_MESSAGES`, `LANG`, then the OS
+   * locale, then English.
+   */
+  locale?: string;
+  /**
    * Status line items, in display order.
    *
    * Item ids are kebab-case, for example
@@ -112,6 +128,7 @@ export function parseTuiConfig(raw: Record<string, unknown>): TuiConfig {
           }
         : {}),
     ...(typeof tui.showTips === 'boolean' ? { showTips: tui.showTips } : {}),
+    ...(typeof tui.locale === 'string' && tui.locale.trim() ? { locale: tui.locale.trim() } : {}),
     ...(notifications ? { notifications } : {}),
     ...(statusLine ? { statusLine } : {}),
     ...(customStatusLine ? { customStatusLine } : {}),

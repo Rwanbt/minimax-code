@@ -54,6 +54,13 @@ const steps = [
   { name: "typecheck", script: "typecheck", fullOnly: true },
   { name: "build", script: "build", windows: true },
   { name: "check:standalone", script: "check:standalone", windows: true },
+  {
+    // Translation catalogs: key parity, placeholder agreement, plural categories
+    // from Intl.PluralRules, and no draft locale reaching production. Length
+    // ratios are deliberately not a gate; the renderer width matrix is.
+    name: "check:i18n",
+    command: ["scripts/i18n-check.mjs"],
+  },
   { name: "test:artifact", script: "test:artifact", windows: true },
   { name: "test:capabilities", script: "test:capabilities" },
   { name: "test:windows", script: "test:windows", platforms: ["win32"], windows: true },

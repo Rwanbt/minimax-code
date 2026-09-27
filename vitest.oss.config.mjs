@@ -18,5 +18,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: allSuiteFiles(root),
+    // Behavioural tests must not depend on the developer's OS locale.
+    setupFiles: ["./test/i18n-locale-pin.mjs"],
   },
 });

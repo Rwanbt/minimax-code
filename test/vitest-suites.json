@@ -178,6 +178,7 @@
       "packages/tui/test/unit/tui/theme/palettes.test.ts",
       "packages/tui/test/unit/tui/theme/runtime.test.ts",
       "packages/tui/test/unit/tui-plugin-mentions.test.ts",
+      "packages/tui/test/unit/tui-i18n.test.ts",
       "packages/local-runtime-v2/src/service/turn-system/agent-host/assembly/local-turn-plugin-capabilities.test.ts",
       "packages/agent-modules/context-manager/test/provider-budget.test.ts",
       "packages/agent-tools/test/desktop/local-bash-output.test.ts",
