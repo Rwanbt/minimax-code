@@ -3,6 +3,7 @@ import { truncateToWidth, visibleWidth } from '../rendering/text.js';
 import { renderTuiActionHint, tuiChalk as chalk, tuiColors as colors } from '../theme/runtime.js';
 import { sanitizeTerminalText } from '../rendering/terminal-text.js';
 import { formatTuiKeybinding, type TuiKeybindingRegistry } from './keybindings.js';
+import { t, tpl } from '../../i18n/translate.js';
 
 const MAX_VISIBLE_WAITING_ITEMS = 4;
 
@@ -50,7 +51,7 @@ export class TuiFollowUpPanel implements Component {
         ? [
             truncateToWidth(
               chalk.hex(colors.warning)(
-                `Queue paused · ${this.summary.pendingCount} pending · /queue to continue`,
+                tpl('followUp.paused.summary', { pending: this.summary.pendingCount }),
               ),
               safeWidth,
             ),
@@ -63,7 +64,12 @@ export class TuiFollowUpPanel implements Component {
 
 function renderFailedItem(item: TuiFollowUpPanelItem, width: number): string[] {
   const reason = sanitizeTerminalText(item.failedReason ?? '').trim();
-  const title = `Couldn't send${reason ? ` · ${reason}` : ''}`;
+  // Two whole keys rather than one pattern with an optional segment: a single
+  // pattern would leave a dangling separator when the reason is empty, and the
+  // separator's position is a writing decision, not punctuation logic.
+  const title = reason
+    ? tpl('followUp.failed.titleWithReason', { reason })
+    : t('followUp.failed.title');
   return [
     truncateToWidth(
       `${chalk.bold.hex(colors.error)('×')} ${chalk.bold.hex(colors.error)(title)}`,
@@ -81,19 +87,23 @@ function renderWaitingItems(
   paused = false,
 ): string[] {
   if (items.length === 0) return [];
-  const manage = '/queue manage';
-  const sendTiming = paused ? 'paused' : 'after current response';
-  const restore = `${formatTuiKeybinding('run.restore-waiting-option', keybindings)} restore latest`;
+  const manage = t('followUp.action.manage');
+  const sendTiming = t(
+    paused ? 'followUp.timing.paused' : 'followUp.timing.afterResponse',
+  );
+  const restore = tpl('followUp.action.restoreLatest', {
+    shortcut: formatTuiKeybinding('run.restore-waiting-option', keybindings),
+  });
   if (items.length === 1 && items[0]) {
     return [
-      ...renderWaitingHeader('Next', sendTiming, restore, manage, width),
+      ...renderWaitingHeader(t('followUp.waiting.nextTitle'), sendTiming, restore, manage, width),
       renderItemLine(items[0], chalk.hex(colors.line)('└'), '', width),
     ];
   }
   const visible = items.slice(0, MAX_VISIBLE_WAITING_ITEMS);
   const hiddenCount = items.length - visible.length;
   const header = renderWaitingHeader(
-    `Queue · ${items.length} next`,
+    tpl('followUp.waiting.queueTitle', { count: items.length }),
     sendTiming,
     restore,
     manage,
@@ -110,7 +120,9 @@ function renderWaitingItems(
   if (hiddenCount > 0) {
     rows.push(
       truncateToWidth(
-        `${chalk.hex(colors.line)('└')}  ${chalk.hex(colors.muted)(`+${hiddenCount} more`)}`,
+        `${chalk.hex(colors.line)('└')}  ${chalk.hex(colors.muted)(
+          `+${tpl('followUp.count.more', { count: hiddenCount })}`,
+        )}`,
         width,
         chalk.hex(colors.muted)('…'),
       ),
@@ -151,7 +163,7 @@ function itemPreview(item: TuiFollowUpPanelItem): string {
     .map((name) => sanitizeTerminalText(name).replace(/\s+/gu, ' ').trim())
     .filter(Boolean);
   const attachmentSuffix = attachments.length > 0 ? ` · ${attachments.join(', ')}` : '';
-  return `${content || '(attachment-only message)'}${attachmentSuffix}`;
+  return `${content || t('followUp.item.attachmentOnly')}${attachmentSuffix}`;
 }
 
 function renderItemLine(

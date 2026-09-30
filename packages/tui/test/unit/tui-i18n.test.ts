@@ -634,3 +634,40 @@ describe('welcome tips keep their commands', () => {
     }
   });
 });
+describe('follow-up panel keeps /queue', () => {
+  /** `/queue` is a slash command and stays invariant inside these sentences. */
+  const LOCALES = ['en', 'zh-Hans', 'fr'] as const;
+
+  it('keeps /queue in every locale', () => {
+    for (const locale of LOCALES) {
+      expect(t('followUp.action.manage', locale), locale).toContain('/queue');
+      expect(tpl('followUp.paused.summary', { pending: 2 }, locale), locale).toContain('/queue');
+    }
+  });
+
+  it('keeps the restore shortcut in the action label', () => {
+    for (const locale of LOCALES) {
+      const value = tpl('followUp.action.restoreLatest', { shortcut: 'Ctrl+R' }, locale);
+      expect(value, locale).toContain('Ctrl+R');
+      expect(value, locale).not.toContain('{shortcut}');
+    }
+  });
+
+  it('substitutes the pending count in the paused summary', () => {
+    const value = tpl('followUp.paused.summary', { pending: 7 }, 'fr');
+    expect(value).toContain('7');
+    expect(value).not.toContain('{pending}');
+  });
+
+  it('carries the failure reason, and omits it cleanly when there is none', () => {
+    // The upstream code appended " · reason" conditionally. A single pattern with
+    // a mandatory placeholder would leave a dangling separator when the reason is
+    // empty, so the two forms are separate whole keys.
+    const withReason = tpl('followUp.failed.titleWithReason', { reason: 'rate limited' }, 'en');
+    expect(withReason).toContain('rate limited');
+
+    const withoutReason = t('followUp.failed.title', 'en');
+    expect(withoutReason).not.toContain('·');
+    expect(withoutReason.trim()).toBe(withoutReason);
+  });
+});
