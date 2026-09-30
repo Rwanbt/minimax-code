@@ -210,6 +210,36 @@ export const EN_CATALOG = {
       other: '{count} cancelled',
     },
   },
+  'todo.title': 'Todo list',
+  'todo.count.done': 'done',
+  'todo.completedAll': 'Todo list {completed}/{total} completed',
+  'todo.action.close': 'close',
+  'todo.action.compact': 'compact',
+  'todo.action.expand': 'expand',
+  'todo.count.skipped': {
+    plural: {
+      one: '{count} skipped',
+      other: '{count} skipped',
+    },
+  },
+  'todo.count.remaining': {
+    plural: {
+      one: '{count} remaining',
+      other: '{count} remaining',
+    },
+  },
+  'todo.count.pending': {
+    plural: {
+      one: '{count} pending',
+      other: '{count} pending',
+    },
+  },
+  'todo.count.more': {
+    plural: {
+      one: '{count} more',
+      other: '{count} more',
+    },
+  },
   'composer.image.loading': 'Loading preview…',
   'composer.image.unavailable': 'Preview unavailable · attachment is still ready to send',
   'composer.image.unsupported': 'Image preview is not supported by this terminal',

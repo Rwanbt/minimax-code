@@ -4,6 +4,7 @@ import { sanitizeTerminalText } from '../rendering/terminal-text.js';
 import { renderTuiActionHint, tuiChalk as chalk, tuiColors as colors } from '../theme/runtime.js';
 import type { TuiTodoItem, TuiTodoStatus } from '../todo/model.js';
 import { formatTuiKeybinding, type TuiKeybindingRegistry } from './keybindings.js';
+import { t, tPlural } from '../../i18n/translate.js';
 
 const COMPACT_TODO_LIMIT = 3;
 const COMPACT_ACTION_MIN_COLUMNS = 32;
@@ -56,7 +57,12 @@ export class TuiTodoPanel implements Component {
     if (completed === this.items.length) {
       return [
         truncateToWidth(
-          `  ${chalk.hex(colors.success)(`✓ Todo list ${completed}/${this.items.length} completed`)}`,
+          // The tick is a status glyph, not copy: the catalog carries the words and
+          // the renderer owns the marker, which is what `renderMarker` does for
+          // the rows below.
+          `  ${chalk.hex(colors.success)('✓')} ${chalk.hex(colors.success)(
+            t('todo.completedAll', { completed, total: this.items.length }),
+          )}`,
           safeWidth,
           chalk.hex(colors.muted)('…'),
         ),
@@ -106,36 +112,52 @@ interface TodoSummary {
 }
 
 function renderExpandedHeader(summary: TodoSummary & { readonly remaining: number }): string {
-  const progress = chalk.bold.hex(colors.text)(`Todo list ${summary.completed}/${summary.total}`);
+  const progress = chalk.bold.hex(colors.text)(
+    `${t('todo.title')} ${summary.completed}/${summary.total}`,
+  );
   const action =
     summary.width < CLOSE_ACTION_MIN_COLUMNS
       ? summary.shortcut
-      : `${summary.shortcut} ${summary.width < COMPACT_ACTION_MIN_COLUMNS ? 'close' : 'compact'}`;
+      : `${summary.shortcut} ${t(
+          summary.width < COMPACT_ACTION_MIN_COLUMNS ? 'todo.action.close' : 'todo.action.compact',
+        )}`;
   if (summary.width < FULL_SUMMARY_MIN_COLUMNS) {
     return `  ${progress}${renderTuiActionHint(` · ${action}`)}`;
   }
-  const skipped = summary.cancelled > 0 ? ` · ${summary.cancelled} skipped` : '';
+  // Counted phrases are real plurals, not `${count} skipped` with an English
+  // suffix. Polish changes the noun between the `few` and `many` categories.
+  const skipped =
+    summary.cancelled > 0 ? ` · ${tPlural('todo.count.skipped', summary.cancelled)}` : '';
   return `  ${progress}${renderTuiActionHint(
-    ` · ${summary.remaining} remaining${skipped} · ${action}`,
+    ` · ${tPlural('todo.count.remaining', summary.remaining)}${skipped} · ${action}`,
   )}`;
 }
 
 function renderCompactSummary(
   summary: TodoSummary & { readonly pending: number; readonly hidden: number },
 ): string {
+  // "expand" is a single label rather than a sentence, so the order the code
+  // places it in is the order every shipped language reads it in. The counted
+  // parts around it are plurals.
+  const expand = `${summary.shortcut} ${t('todo.action.expand')}`;
   if (summary.width < COMPACT_ACTION_MIN_COLUMNS && summary.hidden > 0) {
-    return `  ${renderTuiActionHint(`… +${summary.hidden} · ${summary.shortcut} expand`)}`;
+    return `  ${renderTuiActionHint(`… +${summary.hidden} · ${expand}`)}`;
   }
   if (summary.width < FULL_SUMMARY_MIN_COLUMNS && summary.hidden > 0) {
     return `  ${renderTuiActionHint(
-      `… +${summary.hidden} · ${summary.completed}/${summary.total} · ${summary.shortcut} expand`,
+      `… +${summary.hidden} · ${summary.completed}/${summary.total} · ${expand}`,
     )}`;
   }
-  const hidden = summary.hidden > 0 ? `… +${summary.hidden} more · ` : '';
-  const skipped = summary.cancelled > 0 ? ` · ${summary.cancelled} skipped` : '';
-  const action = summary.hidden > 0 ? ` · ${summary.shortcut} expand` : '';
+  const hidden =
+    summary.hidden > 0 ? `… +${summary.hidden} ${tPlural('todo.count.more', summary.hidden)} · ` : '';
+  const skipped =
+    summary.cancelled > 0 ? ` · ${tPlural('todo.count.skipped', summary.cancelled)}` : '';
+  const action = summary.hidden > 0 ? ` · ${expand}` : '';
   return `  ${renderTuiActionHint(
-    `${hidden}${summary.completed}/${summary.total} done${skipped} · ${summary.pending} pending${action}`,
+    `${hidden}${summary.completed}/${summary.total} ${t('todo.count.done')}${skipped} · ${tPlural(
+      'todo.count.pending',
+      summary.pending,
+    )}${action}`,
   )}`;
 }
 

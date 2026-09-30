@@ -219,6 +219,40 @@ export const FR_CATALOG = {
       other: '{count} annulées',
     },
   },
+  'todo.title': 'Liste Todo',
+  'todo.count.done': 'terminés',
+  'todo.completedAll': 'Liste Todo {completed}/{total} terminée',
+  'todo.action.close': 'fermer',
+  'todo.action.compact': 'réduire',
+  'todo.action.expand': 'développer',
+  'todo.count.skipped': {
+    plural: {
+      one: '{count} ignoré',
+      many: '{count} ignorés',
+      other: '{count} ignorés',
+    },
+  },
+  'todo.count.remaining': {
+    plural: {
+      one: '{count} restant',
+      many: '{count} restants',
+      other: '{count} restants',
+    },
+  },
+  'todo.count.pending': {
+    plural: {
+      one: '{count} en attente',
+      many: '{count} en attente',
+      other: '{count} en attente',
+    },
+  },
+  'todo.count.more': {
+    plural: {
+      one: '{count} de plus',
+      many: '{count} de plus',
+      other: '{count} de plus',
+    },
+  },
   'composer.image.loading': 'Chargement de l\'aperçu…',
   'composer.image.unavailable': 'Aperçu indisponible · la pièce jointe reste prête à envoyer',
   'composer.image.unsupported': 'Ce terminal ne gère pas l\'aperçu des images',

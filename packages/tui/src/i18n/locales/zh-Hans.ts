@@ -205,6 +205,32 @@ export const ZH_HANS_CATALOG = {
       other: '{count} 个已取消',
     },
   },
+  'todo.title': 'Todo 列表',
+  'todo.count.done': '已完成',
+  'todo.completedAll': 'Todo 列表 {completed}/{total} 已完成',
+  'todo.action.close': '关闭',
+  'todo.action.compact': '收起',
+  'todo.action.expand': '展开',
+  'todo.count.skipped': {
+    plural: {
+      other: '{count} 个已跳过',
+    },
+  },
+  'todo.count.remaining': {
+    plural: {
+      other: '剩余 {count} 个',
+    },
+  },
+  'todo.count.pending': {
+    plural: {
+      other: '{count} 个待处理',
+    },
+  },
+  'todo.count.more': {
+    plural: {
+      other: '还有 {count} 个',
+    },
+  },
   'composer.image.loading': '正在加载预览…',
   'composer.image.unavailable': '无法预览 · 附件仍可发送',
   'composer.image.unsupported': '当前终端不支持显示图片预览',
