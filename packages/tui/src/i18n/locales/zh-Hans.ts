@@ -173,6 +173,38 @@ export const ZH_HANS_CATALOG = {
   'statusLine.item.contextRemaining': '剩余上下文窗口',
   'statusLine.item.contextMeter': '剩余上下文刻度条',
   'statusLine.item.customCommand': '已配置的自定义命令输出',
+  'tasks.title': '任务',
+  'tasks.detailsHint': '/tasks 详情',
+  'tasks.failed': {
+    plural: {
+      other: '{count} 个失败',
+    },
+  },
+  'tasks.agentsWaiting': {
+    plural: {
+      other: '{count} 个 Agent 等待中',
+    },
+  },
+  'tasks.agentsActive': {
+    plural: {
+      other: '{count} 个 Agent 运行中',
+    },
+  },
+  'tasks.backgroundActive': {
+    plural: {
+      other: '{count} 个后台任务运行中',
+    },
+  },
+  'tasks.resultsReady': {
+    plural: {
+      other: '{count} 个结果就绪',
+    },
+  },
+  'tasks.cancelled': {
+    plural: {
+      other: '{count} 个已取消',
+    },
+  },
   'composer.image.loading': '正在加载预览…',
   'composer.image.unavailable': '无法预览 · 附件仍可发送',
   'composer.image.unsupported': '当前终端不支持显示图片预览',
@@ -337,25 +369,21 @@ export const ZH_HANS_CATALOG = {
   'command.edit.unavailable': '请先开始或恢复一个会话，再编辑消息。',
   'session.history.incompleteHidden': {
     plural: {
-      one: '已隐藏 1 条未完成消息',
       other: '已隐藏 {count} 条未完成消息',
     },
   },
   'session.format.files': {
     plural: {
-      one: '{count} 个文件',
       other: '{count} 个文件',
     },
   },
   'session.format.affectedTurns': {
     plural: {
-      one: '影响 {count} 个 turn',
       other: '影响 {count} 个 turn',
     },
   },
   'session.format.turns': {
     plural: {
-      one: '{count} 个 turn',
       other: '{count} 个 turn',
     },
   },

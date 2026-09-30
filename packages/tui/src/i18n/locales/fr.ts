@@ -175,6 +175,50 @@ export const FR_CATALOG = {
   'statusLine.item.contextRemaining': 'Fenêtre de contexte restante',
   'statusLine.item.contextMeter': 'Jauge de contexte restante',
   'statusLine.item.customCommand': 'Sortie de la commande personnalisée configurée',
+  'tasks.title': 'Tâches',
+  'tasks.detailsHint': '/tasks détails',
+  'tasks.failed': {
+    plural: {
+      one: '{count} en échec',
+      many: '{count} en échec',
+      other: '{count} en échec',
+    },
+  },
+  'tasks.agentsWaiting': {
+    plural: {
+      one: '{count} agent en attente',
+      many: '{count} agents en attente',
+      other: '{count} agents en attente',
+    },
+  },
+  'tasks.agentsActive': {
+    plural: {
+      one: '{count} agent actif',
+      many: '{count} agents actifs',
+      other: '{count} agents actifs',
+    },
+  },
+  'tasks.backgroundActive': {
+    plural: {
+      one: '{count} tâche en arrière-plan active',
+      many: '{count} tâches en arrière-plan actives',
+      other: '{count} tâches en arrière-plan actives',
+    },
+  },
+  'tasks.resultsReady': {
+    plural: {
+      one: '{count} résultat prêt',
+      many: '{count} résultats prêts',
+      other: '{count} résultats prêts',
+    },
+  },
+  'tasks.cancelled': {
+    plural: {
+      one: '{count} annulée',
+      many: '{count} annulées',
+      other: '{count} annulées',
+    },
+  },
   'composer.image.loading': 'Chargement de l\'aperçu…',
   'composer.image.unavailable': 'Aperçu indisponible · la pièce jointe reste prête à envoyer',
   'composer.image.unsupported': 'Ce terminal ne gère pas l\'aperçu des images',

@@ -172,6 +172,44 @@ export const EN_CATALOG = {
   'statusLine.item.contextRemaining': 'Remaining context window',
   'statusLine.item.contextMeter': 'Remaining context gauge',
   'statusLine.item.customCommand': 'Configured custom command output',
+  'tasks.title': 'Tasks',
+  'tasks.detailsHint': '/tasks details',
+  'tasks.failed': {
+    plural: {
+      one: '{count} failed',
+      other: '{count} failed',
+    },
+  },
+  'tasks.agentsWaiting': {
+    plural: {
+      one: '{count} agent waiting',
+      other: '{count} agents waiting',
+    },
+  },
+  'tasks.agentsActive': {
+    plural: {
+      one: '{count} agent active',
+      other: '{count} agents active',
+    },
+  },
+  'tasks.backgroundActive': {
+    plural: {
+      one: '{count} background active',
+      other: '{count} backgrounds active',
+    },
+  },
+  'tasks.resultsReady': {
+    plural: {
+      one: '{count} result ready',
+      other: '{count} results ready',
+    },
+  },
+  'tasks.cancelled': {
+    plural: {
+      one: '{count} cancelled',
+      other: '{count} cancelled',
+    },
+  },
   'composer.image.loading': 'Loading preview…',
   'composer.image.unavailable': 'Preview unavailable · attachment is still ready to send',
   'composer.image.unsupported': 'Image preview is not supported by this terminal',

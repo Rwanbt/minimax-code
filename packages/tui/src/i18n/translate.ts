@@ -46,11 +46,29 @@ export function invalidateCatalogCache(): void {
   cache.clear()
 }
 
-function messageFor(key: MessageKey, locale: SupportedLocale): Message | undefined {
+/**
+ * Resolve a message together with the locale it was actually found in.
+ *
+ * The pair matters for plurals. When a draft locale has no entry the text comes
+ * from English, so the plural category has to be selected for English as well:
+ * selecting `other` for a Japanese reader and applying it to the English
+ * sentence would render "1 agents active" — the English `other` form — instead
+ * of "1 agent active". This affected every key in every draft locale, which is
+ * every locale except English until the translation workstreams land.
+ */
+function resolveMessage(
+  key: MessageKey,
+  locale: SupportedLocale,
+): { message: Message; locale: SupportedLocale } | undefined {
   const fromLocale = catalogFor(locale)[key]
-  if (fromLocale !== undefined) return fromLocale
+  if (fromLocale !== undefined) return { message: fromLocale, locale }
   if (locale === DEFAULT_LOCALE) return undefined
-  return catalogFor(DEFAULT_LOCALE)[key]
+  const fallback = catalogFor(DEFAULT_LOCALE)[key]
+  return fallback === undefined ? undefined : { message: fallback, locale: DEFAULT_LOCALE }
+}
+
+function messageFor(key: MessageKey, locale: SupportedLocale): Message | undefined {
+  return resolveMessage(key, locale)?.message
 }
 
 function renderPattern(
@@ -150,7 +168,10 @@ interface PluralMessageLike {
 
 /**
  * Plural-aware translation. The category comes from `Intl.PluralRules` so Polish
- * (four forms) and Russian (three forms) are correct without a per-locale table.
+ * and Russian (both four forms) are correct without a per-locale table.
+ *
+ * The category is selected for the locale the message was actually resolved
+ * from, not the one requested — see `resolveMessage`.
  */
 export function tPlural(
   key: MessageKey,
@@ -159,13 +180,14 @@ export function tPlural(
   locale?: SupportedLocale,
 ): string {
   const target = locale ?? getActiveLocale()
-  const message = messageFor(key, target)
-  if (message === undefined) return key
+  const resolved = resolveMessage(key, target)
+  if (resolved === undefined) return key
+  const { message, locale: messageLocale } = resolved
   if (isPlainMessage(message)) {
     // English declared this key as plain text; a `{count}` may still be present.
     return renderPattern(key, message, target, { ...values, count })
   }
-  const pattern = selectPluralForm(message.plural, count, target)
+  const pattern = selectPluralForm(message.plural, count, messageLocale)
   return renderPattern(key, pattern, target, { ...values, count })
 }
 

@@ -6,6 +6,7 @@ import { tuiChalk as chalk, tuiColors as colors } from '../theme/runtime.js';
 import type { TuiTodoItem } from '../todo/model.js';
 import type { TuiKeybindingRegistry } from './keybindings.js';
 import { TuiTodoPanel } from './todo-panel.js';
+import { t, tPlural } from '../../i18n/translate.js';
 
 interface TaskSection {
   readonly kind: 'todo' | 'work';
@@ -140,16 +141,12 @@ function renderWorkHeader(
   const cancelled =
     (team?.summary.stopped ?? 0) + tasks.filter((task) => task.status === 'canceled').length;
   const counts = [
-    failed > 0 ? `${String(failed)} failed` : undefined,
-    agentWaiting > 0
-      ? `${String(agentWaiting)} agent${agentWaiting === 1 ? '' : 's'} waiting`
-      : undefined,
-    agentActive > 0
-      ? `${String(agentActive)} agent${agentActive === 1 ? '' : 's'} active`
-      : undefined,
-    backgroundActive > 0 ? `${String(backgroundActive)} background active` : undefined,
-    ready > 0 ? `${String(ready)} result${ready === 1 ? '' : 's'} ready` : undefined,
-    cancelled > 0 ? `${String(cancelled)} cancelled` : undefined,
+    failed > 0 ? tPlural('tasks.failed', failed) : undefined,
+    agentWaiting > 0 ? tPlural('tasks.agentsWaiting', agentWaiting) : undefined,
+    agentActive > 0 ? tPlural('tasks.agentsActive', agentActive) : undefined,
+    backgroundActive > 0 ? tPlural('tasks.backgroundActive', backgroundActive) : undefined,
+    ready > 0 ? tPlural('tasks.resultsReady', ready) : undefined,
+    cancelled > 0 ? tPlural('tasks.cancelled', cancelled) : undefined,
   ].filter((value): value is string => Boolean(value));
   const marker =
     failed > 0
@@ -162,7 +159,9 @@ function renderWorkHeader(
             ? chalk.hex(colors.muted)('■')
             : chalk.hex(colors.success)('✓');
   return truncateToWidth(
-    `${marker} ${chalk.bold.hex(colors.text)('Tasks')}${chalk.hex(colors.muted)(` · ${counts.join(' · ')} · /tasks details`)}`,
+    `${marker} ${chalk.bold.hex(colors.text)(t('tasks.title'))}${chalk.hex(colors.muted)(
+      ` · ${counts.join(' · ')} · ${t('tasks.detailsHint')}`,
+    )}`,
     width,
     '',
   );

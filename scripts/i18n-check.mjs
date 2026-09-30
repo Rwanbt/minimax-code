@@ -122,10 +122,10 @@ const isValidBcp47 = (tag) => {
  * punctuation is left.
  */
 const KEYCAP_VOCABULARY =
-  /Esc|Enter|Shift|Ctrl|Alt|Tab|Backspace|Delete|Insert|Home|End|Page ?(?:Up|Down)|Pg ?(?:Up|Dn)|Arrow/g;
+  /Esc|Enter|Shift|Ctrl|Alt|Tab|Backspace|Delete|Insert|Home|End|Space|Spc|Page ?(?:Up|Down)|Pg ?(?:Up|Dn)|Arrow/g;
 
 function isKeycapOnlyString(value) {
-  if (!/Esc|Enter|Shift|Ctrl|Alt|Tab|↑|↓|←|→/u.test(value)) return false;
+  if (!/Esc|Enter|Shift|Ctrl|Alt|Tab|Space|↑|↓|←|→/u.test(value)) return false;
   const residue = value
     .replace(KEYCAP_VOCABULARY, '')
     .replace(/[↑↓←→\s·|,/-]/gu, '');

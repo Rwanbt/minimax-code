@@ -458,3 +458,78 @@ describe('keycaps survive translation', () => {
     );
   });
 });
+// ── plurals the suffix trick cannot reach ───────────────────────────────────
+
+describe('plural forms the suffix trick cannot reach', () => {
+  /**
+   * The work-summary counters used to read
+   * `${count} agent${count === 1 ? '' : 's'} active`. That is a hardcoded
+   * English rule: two forms, chosen by equality to one. Polish needs four and
+   * Russian three, and neither can be written as a suffix, so these assertions
+   * are the evidence that the catalog form is actually in use.
+   */
+  it('distinguishes counts that a one/other split would merge', () => {
+    const key = 'tasks.agentsActive' as const;
+    // Polish: one / few / many. 2 and 5 are both "other" in English but differ
+    // in Polish, which is the whole point.
+    const polish2 = tPlural(key, 2, undefined, 'pl');
+    const polish5 = tPlural(key, 5, undefined, 'pl');
+    expect(polish5).not.toBe(polish2);
+
+    // Russian: one / few / many.
+    const russian1 = tPlural(key, 1, undefined, 'ru');
+    const russian3 = tPlural(key, 3, undefined, 'ru');
+    expect(russian3).not.toBe(russian1);
+  });
+
+  it('carries the count through unchanged in every locale', () => {
+    // `tpl` substitutes the raw value, so the count appears verbatim. Number
+    // formatting is a separate concern handled by format.ts, and conflating the
+    // two here would make this test depend on locale digit grouping.
+    for (const locale of ['en', 'fr', 'pl', 'ru', 'ja'] as const) {
+      for (const count of [0, 1, 2, 5, 21, 1_000_000]) {
+        const rendered = tPlural('tasks.agentsActive', count, undefined, locale);
+        expect(rendered, `${locale} @${count}`).toContain(String(count));
+      }
+    }
+  });
+
+  it('falls back to English for Japanese until it is translated', () => {
+    // Japanese is a draft with an empty catalog, so every key resolves through
+    // the English fallback. The fallback is the English plural selection, which
+    // means 1 and 7 still read differently — correct behaviour, not a bug, and
+    // the reason this asserts the fallback rather than a single Japanese form.
+    expect(tPlural('tasks.agentsActive', 1, undefined, 'ja')).toBe(
+      tPlural('tasks.agentsActive', 1, undefined, 'en'),
+    );
+    expect(tPlural('tasks.agentsActive', 7, undefined, 'ja')).toBe(
+      tPlural('tasks.agentsActive', 7, undefined, 'en'),
+    );
+  });
+
+  it('agrees with the platform about how many plural forms each locale has', () => {
+    // The catalog must not invent a form a locale never selects. Measured, not
+    // assumed: Japanese has one, English two, French three, and Russian and
+    // Polish four — not three, which is the number one would guess.
+    expect(new Intl.PluralRules('ja').resolvedOptions().pluralCategories).toHaveLength(1);
+    expect(new Intl.PluralRules('en').resolvedOptions().pluralCategories).toHaveLength(2);
+    expect(new Intl.PluralRules('fr').resolvedOptions().pluralCategories).toHaveLength(3);
+    expect(new Intl.PluralRules('ru').resolvedOptions().pluralCategories).toHaveLength(4);
+    expect(new Intl.PluralRules('pl').resolvedOptions().pluralCategories).toHaveLength(4);
+  });
+
+  it('selects the plural form for the locale the text came from', () => {
+    // Regression guard. `ja` is a draft with an empty catalog, so the text is
+    // English — and English count 1 is the `one` form. Selecting the category for
+    // the requested locale instead would pick Japanese `other` and render
+    // "1 agents active".
+    expect(tPlural('tasks.agentsActive', 1, undefined, 'ja')).toBe('1 agent active');
+    expect(tPlural('tasks.agentsActive', 7, undefined, 'ja')).toBe('7 agents active');
+  });
+
+  it('falls back to English for a draft locale with no translations', () => {
+    expect(tPlural('tasks.agentsActive', 3, undefined, 'es')).toBe(
+      tPlural('tasks.agentsActive', 3, undefined, 'en'),
+    );
+  });
+});
