@@ -585,3 +585,52 @@ describe('shell chrome invariants', () => {
     expect(tpl('chrome.chip.effort.full', { effort: 'high' }, 'en')).toBe('Effort high');
   });
 });
+describe('welcome tips keep their commands', () => {
+  /**
+   * Each tip exists to advertise a slash command. A translation that dropped the
+   * command would leave a sentence with nothing actionable in it, and the catalog
+   * would not notice: the French and Chinese strings are perfectly valid on their
+   * own.
+   */
+  const LOCALES = ['en', 'zh-Hans', 'fr'] as const;
+
+  const COMMAND_OF: Readonly<Record<string, string>> = {
+    'welcome.tip.init': '/init',
+    'welcome.tip.plan': '/plan',
+    'welcome.tip.context': '/context',
+    'welcome.tip.sessions': '/sessions',
+    'welcome.tip.history': '/history',
+    'welcome.tip.goal': '/goal',
+    'welcome.tip.permission': '/permission',
+    'welcome.tip.feedback': '/feedback',
+    'welcome.tip.checkin': '/checkin',
+  };
+
+  it.each(LOCALES)('keeps its slash command in every locale (%s)', (locale) => {
+    for (const [key, command] of Object.entries(COMMAND_OF)) {
+      const value = tpl(key as never, { shortcut: 'Ctrl+V' }, locale);
+      expect(value, `${locale} ${key}`).toContain(command);
+    }
+  });
+
+  it('keeps the @ file reference and the paste shortcut', () => {
+    for (const locale of LOCALES) {
+      const value = tpl('welcome.tip.atForFiles', { shortcut: 'Ctrl+V' }, locale);
+      expect(value, locale).toContain('@');
+      expect(value, locale).toContain('Ctrl+V');
+    }
+  });
+
+  it('translates the tips rather than serving the English pool everywhere', () => {
+    const english = t('welcome.tip.init', 'en');
+    const french = t('welcome.tip.init', 'fr');
+    expect(french).not.toBe(english);
+    expect(french).toContain('/init');
+  });
+
+  it('keeps /changelog in the news section title', () => {
+    for (const locale of LOCALES) {
+      expect(t('welcome.section.news', locale), locale).toContain('/changelog');
+    }
+  });
+});

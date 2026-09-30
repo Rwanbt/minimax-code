@@ -353,6 +353,11 @@
       "value": "Effort {effort}",
       "reason": "same word in French; translating it would be wrong",
       "family": "chrome.chip.effort"
+    },
+    {
+      "value": "/context · /feedback",
+      "reason": "two slash commands and a separator, no prose; commands are invariant",
+      "family": "welcome.compact.news"
     }
   ]
 }

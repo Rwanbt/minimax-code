@@ -12,13 +12,25 @@ import {
 import { resolveTuiLayoutPolicy } from '../layout-policy.js';
 import { formatTuiKeybinding, type TuiKeybindingRegistry } from '../keybindings.js';
 import {
-  MINIMAX_CODE_WELCOME_DESIGN,
+  MINIMAX_CODE_WELCOME_COMPACT_NEWS_KEYS,
+  MINIMAX_CODE_WELCOME_COMPACT_TIP_KEYS,
   MINIMAX_CODE_WELCOME_PASTE_IMAGE_SHORTCUT,
+  MINIMAX_CODE_WELCOME_STACKED_NEWS_KEYS,
+  MINIMAX_CODE_WELCOME_STACKED_TIP_KEYS,
+  MINIMAX_CODE_WELCOME_WIDE_NEWS_KEYS,
+  MINIMAX_CODE_WELCOME_WIDE_TIP_KEYS,
+  type WelcomeNewsKey,
+  type WelcomeTipKey,
 } from './design.js';
+import { t, tpl } from '../../../i18n/translate.js';
 import { renderTuiWelcomeHero } from './hero.js';
 
 export interface TuiWelcomeContent {
-  readonly tips?: readonly string[];
+  /**
+   * Sampled once at startup, so the panel does not reshuffle on every render.
+   * Keys rather than text, so the copy follows the active locale.
+   */
+  readonly tipKeys?: readonly WelcomeTipKey[];
   readonly changelogEntries?: readonly string[];
 }
 
@@ -58,6 +70,24 @@ export class TuiWelcome implements Component {
   }
 }
 
+/**
+ * Resolve tip and news keys to text, in the active locale.
+ *
+ * Resolution happens here rather than in `design.ts` on purpose: the design
+ * module is loaded once, and a `t()` call at its module level would fix the
+ * language for the whole process. Here the panel re-resolves on every render, so
+ * a language switch reaches it.
+ */
+function renderTips(keys: readonly WelcomeTipKey[]): string[] {
+  return keys.map((key) =>
+    tpl(key, { shortcut: MINIMAX_CODE_WELCOME_PASTE_IMAGE_SHORTCUT }),
+  );
+}
+
+function renderNews(keys: readonly WelcomeNewsKey[]): string[] {
+  return keys.map((key) => t(key));
+}
+
 function fitWelcomeHeight(lines: string[], height: number): string[] {
   if (!Number.isFinite(height)) return lines;
   const maxRows = Math.max(1, Math.floor(height));
@@ -76,10 +106,10 @@ function renderWideWelcome(
   keybindings: TuiKeybindingRegistry | undefined,
   content?: TuiWelcomeContent,
 ): string[] {
-  const tips = resolveWelcomeItems(content?.tips, MINIMAX_CODE_WELCOME_DESIGN.wide.tips, 3);
+  const tips = resolveWelcomeItems(content?.tipKeys, renderTips(MINIMAX_CODE_WELCOME_WIDE_TIP_KEYS), 3);
   const news = resolveWelcomeItems(
     content?.changelogEntries,
-    MINIMAX_CODE_WELCOME_DESIGN.wide.news,
+    renderNews(MINIMAX_CODE_WELCOME_WIDE_NEWS_KEYS),
     3,
   );
   return [
@@ -87,12 +117,12 @@ function renderWideWelcome(
     '',
     renderWelcomeHeader(state, width),
     ...renderWelcomeAccountNoticeRows(state, width),
-    renderFrameRow(renderSectionTitle(MINIMAX_CODE_WELCOME_DESIGN.sectionTitles.tips), width),
+    renderFrameRow(renderSectionTitle(t('welcome.section.tips')), width),
     ...tips.map((text) =>
       renderFrameRow(renderWelcomeBullet(resolveWelcomeCopy(text, keybindings)), width),
     ),
     renderFrameDivider(width),
-    renderFrameRow(renderSectionTitle(MINIMAX_CODE_WELCOME_DESIGN.sectionTitles.news), width),
+    renderFrameRow(renderSectionTitle(t('welcome.section.news')), width),
     ...news.map((text) =>
       renderFrameRow(renderWelcomeBullet(resolveWelcomeCopy(text, keybindings)), width),
     ),
@@ -106,10 +136,10 @@ function renderStackedWelcome(
   keybindings: TuiKeybindingRegistry | undefined,
   content?: TuiWelcomeContent,
 ): string[] {
-  const tips = resolveWelcomeItems(content?.tips, MINIMAX_CODE_WELCOME_DESIGN.stacked.tips, 2);
+  const tips = resolveWelcomeItems(content?.tipKeys, renderTips(MINIMAX_CODE_WELCOME_STACKED_TIP_KEYS), 2);
   const news = resolveWelcomeItems(
     content?.changelogEntries,
-    MINIMAX_CODE_WELCOME_DESIGN.stacked.news,
+    renderNews(MINIMAX_CODE_WELCOME_STACKED_NEWS_KEYS),
     3,
   );
   return [
@@ -118,12 +148,12 @@ function renderStackedWelcome(
     renderWelcomeHeader(state, width),
     ...renderWelcomeAccountNoticeRows(state, width),
     renderFrameDivider(width),
-    renderFrameRow(renderSectionTitle(MINIMAX_CODE_WELCOME_DESIGN.sectionTitles.tips), width),
+    renderFrameRow(renderSectionTitle(t('welcome.section.tips')), width),
     ...tips.map((text) =>
       renderFrameRow(renderWelcomeBullet(resolveWelcomeCopy(text, keybindings)), width),
     ),
     renderFrameRow('', width),
-    renderFrameRow(renderSectionTitle(MINIMAX_CODE_WELCOME_DESIGN.sectionTitles.news), width),
+    renderFrameRow(renderSectionTitle(t('welcome.section.news')), width),
     ...news.map((text) =>
       renderFrameRow(renderWelcomeBullet(resolveWelcomeCopy(text, keybindings)), width),
     ),
@@ -138,10 +168,10 @@ function renderCompactWelcome(
   keybindings: TuiKeybindingRegistry | undefined,
   content?: TuiWelcomeContent,
 ): string[] {
-  const tips = resolveWelcomeItems(content?.tips, MINIMAX_CODE_WELCOME_DESIGN.compact.tips, 2);
+  const tips = resolveWelcomeItems(content?.tipKeys, renderTips(MINIMAX_CODE_WELCOME_COMPACT_TIP_KEYS), 2);
   const news = resolveWelcomeItems(
     content?.changelogEntries,
-    MINIMAX_CODE_WELCOME_DESIGN.compact.news,
+    renderNews(MINIMAX_CODE_WELCOME_COMPACT_NEWS_KEYS),
     3,
   );
   return [
@@ -157,7 +187,7 @@ function renderCompactWelcome(
     ...tips.map((text) =>
       renderFrameRow(chalk.hex(colors.muted)(resolveWelcomeCopy(text, keybindings)), width),
     ),
-    renderFrameRow(renderSectionTitle(MINIMAX_CODE_WELCOME_DESIGN.sectionTitles.news), width),
+    renderFrameRow(renderSectionTitle(t('welcome.section.news')), width),
     ...news.map((text) => renderFrameRow(chalk.hex(colors.muted)(text), width)),
     renderFrameBottom(width),
   ];

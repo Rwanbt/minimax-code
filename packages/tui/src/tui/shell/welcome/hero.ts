@@ -5,12 +5,12 @@ import {
   MINIMAX_CODE_TERMINAL_MEDIUM_WORDMARK,
   MINIMAX_CODE_TERMINAL_MICRO_WORDMARK,
   MINIMAX_CODE_TERMINAL_WORDMARK,
-  MINIMAX_CODE_WELCOME_DESIGN,
+  MINIMAX_CODE_WELCOME_HERO,
 } from './design.js';
 
 export function renderTuiWelcomeHero(width: number): string[] {
   const { fullMinWidth, mediumMinWidth, microMinWidth, fallbackTitle } =
-    MINIMAX_CODE_WELCOME_DESIGN.hero;
+    MINIMAX_CODE_WELCOME_HERO;
   const source =
     width >= fullMinWidth
       ? MINIMAX_CODE_TERMINAL_WORDMARK
