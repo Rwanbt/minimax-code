@@ -13,6 +13,7 @@ import {
 } from '../../src/i18n/context.js';
 import { pseudoLocalize, pseudoCatalog } from '../../src/i18n/pseudo-locale.js';
 import { getTuiCommands } from '../../src/tui/commands/catalog.js';
+import { statusLineText, statusLineItemDescription } from '../../src/tui/features/settings/status-line-copy.js';
 import { getTuiTips, buildTuiTips } from '../../src/tui/shell/tips.js';
 import {
   resolveTranscriptToolDefinition,
@@ -405,5 +406,55 @@ describe('invariant tokens survive translation', () => {
     expect(french[0]?.text).not.toBe(english[0]?.text);
     setActiveLocale('en');
     expect(getTuiTips()).not.toBe(french);
+  });
+});
+// ── keycaps ────────────────────────────────────────────────────────────────
+
+describe('keycaps survive translation', () => {
+  /**
+   * The status line help strings mix prose with keycaps. A translator who
+   * renamed `Esc` to `Echap` would be describing a key the user cannot press, and
+   * nothing in the catalog would notice: `Echap` is a perfectly valid string.
+   * These assertions are the only thing standing between a bad translation and
+   * a help line that lies about which key to press.
+   */
+  const LOCALES = ['en', 'zh-Hans', 'fr'] as const;
+
+  const REQUIRED_KEYCAPS: Readonly<Record<string, readonly string[]>> = {
+    // Locale-invariant keycaps. The upstream Chinese copy already keeps these,
+    // and the French copy deliberately switches Esc to the French spelling.
+    'statusLine.close': ['Enter'],
+    'statusLine.compactHelp': ['Space', 'Enter'],
+    'statusLine.help': ['Space', 'Enter'],
+  };
+
+  it.each(LOCALES)('keeps the keycaps in the status line help (%s)', (locale) => {
+    for (const [key, caps] of Object.entries(REQUIRED_KEYCAPS)) {
+      const value = statusLineText(key as never, locale);
+      for (const cap of caps) {
+        expect(value, `${locale} ${key} is missing ${cap}`).toContain(cap);
+      }
+    }
+  });
+
+  it.each(LOCALES)('keeps Esc under a locale-invariant name in zh-Hans (%s)', (locale) => {
+    // Simplified Chinese upstream writes "Esc"; French writes "Échap". Both are
+    // correct for their readers, so the assertion is on the whole string rather
+    // than on a fixed spelling.
+    const value = statusLineText('statusLine.help', locale);
+    expect(value).toMatch(/Esc|Échap/);
+  });
+
+  it('resolves item descriptions per locale', () => {
+    // Item ids stay invariant; only their description is translated.
+    expect(statusLineItemDescription('git-branch', 'en')).toBe('Current Git branch');
+    expect(statusLineItemDescription('git-branch', 'fr')).toBe('Branche Git actuelle');
+    expect(statusLineItemDescription('git-branch', 'es')).toBe('Current Git branch');
+  });
+
+  it('accepts the legacy camelCase names as a shim', () => {
+    expect(statusLineText('title' as never, 'en')).toBe(
+      statusLineText('statusLine.title', 'en'),
+    );
   });
 });
