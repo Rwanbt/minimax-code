@@ -533,3 +533,55 @@ describe('plural forms the suffix trick cannot reach', () => {
     );
   });
 });
+describe('shell chrome invariants', () => {
+  /**
+   * The update chip bolds the `/update` command inside a translated sentence by
+   * locating it with indexOf. A translation that dropped the command would lose
+   * the emphasis and read as an unstyled sentence — no error, just a worse
+   * interface. Nothing in the catalog can catch that.
+   */
+  const LOCALES = ['en', 'zh-Hans', 'fr'] as const;
+
+  // The two long candidates carry the version; the two short ones drop it on
+  // purpose, which is how they fit a narrow terminal.
+  const ACTION_KEYS = [
+    'chrome.update.action.runQuoted',
+    'chrome.update.action.run',
+    'chrome.update.action.review',
+    'chrome.update.action.install',
+  ] as const;
+  const VERSIONED = new Set<keyof typeof ACTION_KEYS>([
+    'chrome.update.action.runQuoted',
+    'chrome.update.action.run',
+  ]);
+
+  it.each(LOCALES)('keeps /update inside every action sentence (%s)', (locale) => {
+    for (const key of ACTION_KEYS) {
+      const value = tpl(key, { version: '1.2.3' }, locale);
+      expect(value, `${locale} ${key}`).toContain('/update');
+      if (VERSIONED.has(key)) {
+        expect(value, `${locale} ${key} should carry the version`).toContain('1.2.3');
+      } else {
+        expect(value, `${locale} ${key} should stay short`).not.toContain('1.2.3');
+      }
+    }
+  });
+
+  it('keeps the compact and long forms of a term meaning the same thing', () => {
+    // Ctx/Context, Eff/Effort and Think/Thinking are the same word at two
+    // widths. French has no natural short form of "thinking", so the compact
+    // chip spells it out rather than inventing an abbreviation — which is a
+    // translation decision, not a missing key. The pair must still agree.
+    expect(t('chrome.chip.thinkingOn.compact', 'fr')).toBe(
+      t('chrome.chip.thinkingOn.full', 'fr'),
+    );
+    expect(t('chrome.chip.context.compact', 'en')).not.toBe(
+      t('chrome.chip.context.full', 'en'),
+    );
+  });
+
+  it('substitutes the window and effort values into the context chips', () => {
+    expect(tpl('chrome.chip.context.compact', { window: '128K' }, 'en')).toBe('Ctx 128K');
+    expect(tpl('chrome.chip.effort.full', { effort: 'high' }, 'en')).toBe('Effort high');
+  });
+});

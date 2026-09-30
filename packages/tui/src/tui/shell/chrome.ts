@@ -1,4 +1,5 @@
 import type { TuiCustomStatusLineConfig } from '@mavis/config';
+import { t, tpl } from '../../i18n/translate.js';
 import { formatContextWindow } from '../../application/context-window.js';
 import type { Component } from '../rendering/component.js';
 import { stripAnsi, truncateToWidth, visibleWidth } from '../rendering/text.js';
@@ -33,28 +34,30 @@ export class TuiUpdateNotice implements Component {
     const safeWidth = normalizeWidth(width);
     if (!this.availableVersion || safeWidth === 0) return [];
 
+    // The `/update` command keeps its emphasis inside a translated sentence, the
+    // same way the transcript bolds a tool name: the line is one catalog entry
+    // and the command is located inside it. Composing a translated prefix and
+    // suffix would freeze the word order around the command, which genuinely
+    // moves between languages.
+    const version = this.availableVersion;
     const headline = fitFirstStatusCandidate(
       [
-        ` ${chalk.bold.hex(colors.signal)('✦ A new version of MCode is available')} ${chalk.hex(
+        ` ${chalk.bold.hex(colors.signal)(t('chrome.update.headline.generic'))} ${chalk.hex(
           colors.text,
-        )('— update for the latest improvements')}`,
-        ` ${chalk.bold.hex(colors.signal)(`✦ MCode ${this.availableVersion} is available`)}`,
-        ` ${chalk.bold.hex(colors.signal)('✦ MCode update available')}`,
+        )(t('chrome.update.headline.released'))}`,
+        ` ${chalk.bold.hex(colors.signal)(
+          tpl('chrome.update.headline.version', { version }),
+        )}`,
+        ` ${chalk.bold.hex(colors.signal)(t('chrome.update.headline.available'))}`,
       ],
       safeWidth,
     );
     const action = fitFirstStatusCandidate(
       [
-        ` ${chalk.hex(colors.muted)("Run '")}${chalk.bold.hex(colors.signal)(
-          '/update',
-        )}${chalk.hex(colors.muted)(`' to install MCode ${this.availableVersion}`)}`,
-        ` ${chalk.hex(colors.muted)('Run ')}${chalk.bold.hex(colors.signal)(
-          '/update',
-        )}${chalk.hex(colors.muted)(` to install ${this.availableVersion}`)}`,
-        ` ${chalk.bold.hex(colors.signal)('/update')}${chalk.hex(colors.muted)(
-          ' · review and install',
-        )}`,
-        ` ${chalk.bold.hex(colors.signal)('/update')}${chalk.hex(colors.muted)(' · install')}`,
+        ` ${emphasiseCommand(tpl('chrome.update.action.runQuoted', { version }), '/update')}`,
+        ` ${emphasiseCommand(tpl('chrome.update.action.run', { version }), '/update')}`,
+        ` ${emphasiseCommand(t('chrome.update.action.review'), '/update')}`,
+        ` ${emphasiseCommand(t('chrome.update.action.install'), '/update')}`,
       ],
       safeWidth,
     );
@@ -398,15 +401,21 @@ function renderStatusIdentity(
   const thinking =
     density === 'minimal' || !state.thinking || state.effort
       ? undefined
-      : density === 'compact'
-        ? `Think ${state.thinking === 'on' ? 'On' : 'Off'}`
-        : `Thinking ${state.thinking === 'on' ? 'On' : 'Off'}`;
+      : t(
+          density === 'compact'
+            ? state.thinking === 'on'
+              ? 'chrome.chip.thinkingOn.compact'
+              : 'chrome.chip.thinkingOff.compact'
+            : state.thinking === 'on'
+              ? 'chrome.chip.thinkingOn.full'
+              : 'chrome.chip.thinkingOff.full',
+        );
   const effort =
     density === 'minimal' || !state.effort
       ? undefined
-      : density === 'compact'
-        ? `Eff ${state.effort}`
-        : `Effort ${state.effort}`;
+      : tpl(density === 'compact' ? 'chrome.chip.effort.compact' : 'chrome.chip.effort.full', {
+          effort: state.effort,
+        });
   const detail = [thinking, effort]
     .filter((part): part is string => Boolean(part))
     .map((part) => `${statusDot()}${chalk.hex(colors.muted)(part)}`)
@@ -426,10 +435,31 @@ function contextWindowTokens(state: TuiShellState): number | undefined {
   return contextWindow;
 }
 
+/**
+ * Bold the command token inside a translated sentence, leaving the rest muted.
+ *
+ * The command is located with `indexOf`, so a translation that dropped it would
+ * silently lose the emphasis and read as an unstyled sentence. The i18n test
+ * asserts every locale keeps `/update` in all four action strings.
+ */
+function emphasiseCommand(text: string, command: string): string {
+  const at = text.indexOf(command);
+  if (at < 0) return chalk.hex(colors.muted)(text);
+  const before = text.slice(0, at);
+  const after = text.slice(at + command.length);
+  return `${chalk.hex(colors.muted)(before)}${chalk.bold.hex(colors.signal)(command)}${chalk.hex(
+    colors.muted,
+  )(after)}`;
+}
+
 function renderContextWindow(state: TuiShellState, compact = false): string {
   const window = contextWindowTokens(state);
   if (window === undefined) return '';
-  return chalk.hex(colors.muted)(`${compact ? 'Ctx' : 'Context'} ${formatContextWindow(window)}`);
+  return chalk.hex(colors.muted)(
+    tpl(compact ? 'chrome.chip.context.compact' : 'chrome.chip.context.full', {
+      window: formatContextWindow(window),
+    }),
+  );
 }
 
 /**

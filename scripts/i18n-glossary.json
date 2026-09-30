@@ -2,44 +2,357 @@
   "version": 1,
   "description": "Locked terminology for the TUI/CLI i18n domain. A term is keyed by (en, family) so a word with two senses can hold two translations.",
   "entries": [
-    { "en": "Session", "family": "concept.session", "sense": "conversation unit", "values": { "fr": "Session", "es": "Sesión", "de": "Session", "pt-BR": "Sessão", "it": "Sessione", "nl": "Sessie", "pl": "Sesja", "ru": "Сессия", "ja": "セッション", "ko": "세션" }, "note": "never translated: product metaphor" },
-    { "en": "Workspace", "family": "concept.workspace", "sense": "project directory set", "values": { "fr": "Espace de travail", "es": "Espacio de trabajo", "de": "Arbeitsbereich", "pt-BR": "Área de trabalho", "it": "Area di lavoro", "nl": "Werkruimte", "pl": "Obszar roboczy", "ru": "Рабочая область", "ja": "ワークスペース", "ko": "작업 공간" } },
-    { "en": "Skill", "family": "concept.skill", "sense": "named capability", "values": { "fr": "Skill", "es": "Skill", "de": "Skill", "pt-BR": "Skill", "it": "Skill", "nl": "Skill", "pl": "Skill", "ru": "Skill", "ja": "スキル", "ko": "스킬" }, "invariant": true, "invariantReason": "mechanism name" },
-    { "en": "Provider", "family": "concept.provider", "sense": "model API vendor", "values": { "fr": "Fournisseur", "es": "Proveedor", "de": "Anbieter", "pt-BR": "Provedor", "it": "Provider", "nl": "Provider", "pl": "Dostawca", "ru": "Провайдер", "ja": "プロバイダー", "ko": "제공자" } },
-    { "en": "Run", "family": "agent.run", "sense": "agent execution", "values": { "fr": "Exécution", "es": "Ejecución", "de": "Ausführung", "pt-BR": "Execução", "it": "Esecuzione", "nl": "Uitvoering", "pl": "Uruchomienie", "ru": "Запуск", "ja": "実行", "ko": "실행" } },
-    { "en": "Run", "family": "ci.run", "sense": "continuous integration run", "values": { "fr": "Pipeline", "es": "Ejecución de CI", "de": "CI-Lauf", "pt-BR": "Execução de CI", "it": "Esecuzione CI", "nl": "CI-run", "pl": "Przebieg CI", "ru": "Запуск CI", "ja": "CI 実行", "ko": "CI 실행" }, "note": "distinct from agent.run" },
-    { "en": "Turn", "family": "agent.turn", "sense": "one user/assistant exchange", "values": { "fr": "tour", "es": "turno", "de": "Zug", "pt-BR": "turno", "it": "turno", "nl": "beurt", "pl": "tura", "ru": "ход", "ja": "ターン", "ko": "턴" } },
-    { "en": "Composer", "family": "concept.composer", "sense": "input area", "values": { "fr": "Zone de saisie", "es": "Composer", "de": "Eingabebereich", "pt-BR": "Área de entrada", "it": "Area di composizione", "nl": "Invoergebied", "pl": "Pole wpisywania", "ru": "Поле ввода", "ja": "入力欄", "ko": "입력창" } },
-    { "en": "Transcript", "family": "concept.transcript", "sense": "rendered conversation", "values": { "fr": "Transcription", "es": "Transcripción", "de": "Transkript", "pt-BR": "Transcrição", "it": "Trascrizione", "nl": "Transcript", "pl": "Transkrypt", "ru": "Транскрипт", "ja": "トランスクリプト", "ko": "트랜스크립트" } },
-    { "en": "Checkpoint", "family": "concept.checkpoint", "sense": "restore point", "values": { "fr": "Point de contrôle", "es": "Punto de control", "de": "Prüfpunkt", "pt-BR": "Ponto de controle", "it": "Checkpoint", "nl": "Controlepunt", "pl": "Punkt kontrolny", "ru": "Контрольная точка", "ja": "チェックポイント", "ko": "체크포인트" } },
-    { "en": "Tool", "family": "concept.tool", "sense": "invoked capability", "values": { "fr": "Outil", "es": "Herramienta", "de": "Werkzeug", "pt-BR": "Ferramenta", "it": "Strumento", "nl": "Gereedschap", "pl": "Narzędzie", "ru": "Инструмент", "ja": "ツール", "ko": "도구" } },
-    { "en": "Rewind", "family": "session.rewind", "sense": "restore earlier state", "values": { "fr": "Retour en arrière", "es": "Retroceder", "de": "Zurückspulen", "pt-BR": "Retroceder", "it": "Riavvolgi", "nl": "Terugspoelen", "pl": "Przewiń", "ru": "Перемотка", "ja": "巻き戻し", "ko": "되감기" } },
-    { "en": "Fork", "family": "session.fork", "sense": "child session", "values": { "fr": "Bifurquer", "es": "Bifurcar", "de": "Abzweigen", "pt-BR": "Bifurcar", "it": "Biforca", "nl": "Vertakken", "pl": "Rozgałęź", "ru": "Разветвить", "ja": "分岐", "ko": "분기" } },
-    { "en": "Prompt", "family": "concept.prompt", "sense": "user input text", "values": { "fr": "prompt", "es": "prompt", "de": "Prompt", "pt-BR": "prompt", "it": "prompt", "nl": "prompt", "pl": "prompt", "ru": "промпт", "ja": "プロンプト", "ko": "프롬프트" }, "note": "user decision 2026-09-27: keep the loanword in French; it is the norm in developer-facing French" }
+    {
+      "en": "Session",
+      "family": "concept.session",
+      "sense": "conversation unit",
+      "values": {
+        "fr": "Session",
+        "es": "Sesión",
+        "de": "Session",
+        "pt-BR": "Sessão",
+        "it": "Sessione",
+        "nl": "Sessie",
+        "pl": "Sesja",
+        "ru": "Сессия",
+        "ja": "セッション",
+        "ko": "세션"
+      },
+      "note": "never translated: product metaphor"
+    },
+    {
+      "en": "Workspace",
+      "family": "concept.workspace",
+      "sense": "project directory set",
+      "values": {
+        "fr": "Espace de travail",
+        "es": "Espacio de trabajo",
+        "de": "Arbeitsbereich",
+        "pt-BR": "Área de trabalho",
+        "it": "Area di lavoro",
+        "nl": "Werkruimte",
+        "pl": "Obszar roboczy",
+        "ru": "Рабочая область",
+        "ja": "ワークスペース",
+        "ko": "작업 공간"
+      }
+    },
+    {
+      "en": "Skill",
+      "family": "concept.skill",
+      "sense": "named capability",
+      "values": {
+        "fr": "Skill",
+        "es": "Skill",
+        "de": "Skill",
+        "pt-BR": "Skill",
+        "it": "Skill",
+        "nl": "Skill",
+        "pl": "Skill",
+        "ru": "Skill",
+        "ja": "スキル",
+        "ko": "스킬"
+      },
+      "invariant": true,
+      "invariantReason": "mechanism name"
+    },
+    {
+      "en": "Provider",
+      "family": "concept.provider",
+      "sense": "model API vendor",
+      "values": {
+        "fr": "Fournisseur",
+        "es": "Proveedor",
+        "de": "Anbieter",
+        "pt-BR": "Provedor",
+        "it": "Provider",
+        "nl": "Provider",
+        "pl": "Dostawca",
+        "ru": "Провайдер",
+        "ja": "プロバイダー",
+        "ko": "제공자"
+      }
+    },
+    {
+      "en": "Run",
+      "family": "agent.run",
+      "sense": "agent execution",
+      "values": {
+        "fr": "Exécution",
+        "es": "Ejecución",
+        "de": "Ausführung",
+        "pt-BR": "Execução",
+        "it": "Esecuzione",
+        "nl": "Uitvoering",
+        "pl": "Uruchomienie",
+        "ru": "Запуск",
+        "ja": "実行",
+        "ko": "실행"
+      }
+    },
+    {
+      "en": "Run",
+      "family": "ci.run",
+      "sense": "continuous integration run",
+      "values": {
+        "fr": "Pipeline",
+        "es": "Ejecución de CI",
+        "de": "CI-Lauf",
+        "pt-BR": "Execução de CI",
+        "it": "Esecuzione CI",
+        "nl": "CI-run",
+        "pl": "Przebieg CI",
+        "ru": "Запуск CI",
+        "ja": "CI 実行",
+        "ko": "CI 실행"
+      },
+      "note": "distinct from agent.run"
+    },
+    {
+      "en": "Turn",
+      "family": "agent.turn",
+      "sense": "one user/assistant exchange",
+      "values": {
+        "fr": "tour",
+        "es": "turno",
+        "de": "Zug",
+        "pt-BR": "turno",
+        "it": "turno",
+        "nl": "beurt",
+        "pl": "tura",
+        "ru": "ход",
+        "ja": "ターン",
+        "ko": "턴"
+      }
+    },
+    {
+      "en": "Composer",
+      "family": "concept.composer",
+      "sense": "input area",
+      "values": {
+        "fr": "Zone de saisie",
+        "es": "Composer",
+        "de": "Eingabebereich",
+        "pt-BR": "Área de entrada",
+        "it": "Area di composizione",
+        "nl": "Invoergebied",
+        "pl": "Pole wpisywania",
+        "ru": "Поле ввода",
+        "ja": "入力欄",
+        "ko": "입력창"
+      }
+    },
+    {
+      "en": "Transcript",
+      "family": "concept.transcript",
+      "sense": "rendered conversation",
+      "values": {
+        "fr": "Transcription",
+        "es": "Transcripción",
+        "de": "Transkript",
+        "pt-BR": "Transcrição",
+        "it": "Trascrizione",
+        "nl": "Transcript",
+        "pl": "Transkrypt",
+        "ru": "Транскрипт",
+        "ja": "トランスクリプト",
+        "ko": "트랜스크립트"
+      }
+    },
+    {
+      "en": "Checkpoint",
+      "family": "concept.checkpoint",
+      "sense": "restore point",
+      "values": {
+        "fr": "Point de contrôle",
+        "es": "Punto de control",
+        "de": "Prüfpunkt",
+        "pt-BR": "Ponto de controle",
+        "it": "Checkpoint",
+        "nl": "Controlepunt",
+        "pl": "Punkt kontrolny",
+        "ru": "Контрольная точка",
+        "ja": "チェックポイント",
+        "ko": "체크포인트"
+      }
+    },
+    {
+      "en": "Tool",
+      "family": "concept.tool",
+      "sense": "invoked capability",
+      "values": {
+        "fr": "Outil",
+        "es": "Herramienta",
+        "de": "Werkzeug",
+        "pt-BR": "Ferramenta",
+        "it": "Strumento",
+        "nl": "Gereedschap",
+        "pl": "Narzędzie",
+        "ru": "Инструмент",
+        "ja": "ツール",
+        "ko": "도구"
+      }
+    },
+    {
+      "en": "Rewind",
+      "family": "session.rewind",
+      "sense": "restore earlier state",
+      "values": {
+        "fr": "Retour en arrière",
+        "es": "Retroceder",
+        "de": "Zurückspulen",
+        "pt-BR": "Retroceder",
+        "it": "Riavvolgi",
+        "nl": "Terugspoelen",
+        "pl": "Przewiń",
+        "ru": "Перемотка",
+        "ja": "巻き戻し",
+        "ko": "되감기"
+      }
+    },
+    {
+      "en": "Fork",
+      "family": "session.fork",
+      "sense": "child session",
+      "values": {
+        "fr": "Bifurquer",
+        "es": "Bifurcar",
+        "de": "Abzweigen",
+        "pt-BR": "Bifurcar",
+        "it": "Biforca",
+        "nl": "Vertakken",
+        "pl": "Rozgałęź",
+        "ru": "Разветвить",
+        "ja": "分岐",
+        "ko": "분기"
+      }
+    },
+    {
+      "en": "Prompt",
+      "family": "concept.prompt",
+      "sense": "user input text",
+      "values": {
+        "fr": "prompt",
+        "es": "prompt",
+        "de": "Prompt",
+        "pt-BR": "prompt",
+        "it": "prompt",
+        "nl": "prompt",
+        "pl": "prompt",
+        "ru": "промпт",
+        "ja": "プロンプト",
+        "ko": "프롬프트"
+      },
+      "note": "user decision 2026-09-27: keep the loanword in French; it is the norm in developer-facing French"
+    }
   ],
   "allowlist": [
-    { "value": "MCP", "reason": "acronym" },
-    { "value": "ACP", "reason": "acronym" },
-    { "value": "BYOK", "reason": "acronym" },
-    { "value": "OAuth", "reason": "acronym" },
-    { "value": "OpenAI", "reason": "proper-noun" },
-    { "value": "Anthropic", "reason": "proper-noun" },
-    { "value": "MiniMax", "reason": "proper-noun" },
-    { "value": "MCode", "reason": "proper-noun" },
-    { "value": "Mcode", "reason": "proper-noun" },
-    { "value": "Runtime", "reason": "mechanism name" },
-    { "value": "Agent", "reason": "mechanism name" },
-    { "value": "Skill", "reason": "mechanism name" },
-    { "value": "worktree", "reason": "mechanism name" },
-    { "value": "diff", "reason": "developer jargon kept in French" },
-    { "value": "prompt", "reason": "product decision 2026-09-27" },
-    { "value": "Esc", "reason": "keycap" },
-    { "value": "Enter", "reason": "keycap" },
-    { "value": "Shift", "reason": "keycap" },
-    { "value": "Ctrl", "reason": "keycap" },
-    { "value": "Alt", "reason": "keycap" },
-    { "value": "Tab", "reason": "keycap" },
-    { "value": "PgUp", "reason": "keycap" },
-    { "value": "PgDn", "reason": "keycap" }
+    {
+      "value": "MCP",
+      "reason": "acronym"
+    },
+    {
+      "value": "ACP",
+      "reason": "acronym"
+    },
+    {
+      "value": "BYOK",
+      "reason": "acronym"
+    },
+    {
+      "value": "OAuth",
+      "reason": "acronym"
+    },
+    {
+      "value": "OpenAI",
+      "reason": "proper-noun"
+    },
+    {
+      "value": "Anthropic",
+      "reason": "proper-noun"
+    },
+    {
+      "value": "MiniMax",
+      "reason": "proper-noun"
+    },
+    {
+      "value": "MCode",
+      "reason": "proper-noun"
+    },
+    {
+      "value": "Mcode",
+      "reason": "proper-noun"
+    },
+    {
+      "value": "Runtime",
+      "reason": "mechanism name"
+    },
+    {
+      "value": "Agent",
+      "reason": "mechanism name"
+    },
+    {
+      "value": "Skill",
+      "reason": "mechanism name"
+    },
+    {
+      "value": "worktree",
+      "reason": "mechanism name"
+    },
+    {
+      "value": "diff",
+      "reason": "developer jargon kept in French"
+    },
+    {
+      "value": "prompt",
+      "reason": "product decision 2026-09-27"
+    },
+    {
+      "value": "Esc",
+      "reason": "keycap"
+    },
+    {
+      "value": "Enter",
+      "reason": "keycap"
+    },
+    {
+      "value": "Shift",
+      "reason": "keycap"
+    },
+    {
+      "value": "Ctrl",
+      "reason": "keycap"
+    },
+    {
+      "value": "Alt",
+      "reason": "keycap"
+    },
+    {
+      "value": "Tab",
+      "reason": "keycap"
+    },
+    {
+      "value": "PgUp",
+      "reason": "keycap"
+    },
+    {
+      "value": "PgDn",
+      "reason": "keycap"
+    },
+    {
+      "value": "Ctx {window}",
+      "reason": "compact status-chip label; French developer UIs use the same abbreviation",
+      "family": "chrome.chip.context"
+    },
+    {
+      "value": "Eff {effort}",
+      "reason": "compact status-chip label for effort; identical in French",
+      "family": "chrome.chip.effort"
+    },
+    {
+      "value": "Effort {effort}",
+      "reason": "same word in French; translating it would be wrong",
+      "family": "chrome.chip.effort"
+    }
   ]
 }

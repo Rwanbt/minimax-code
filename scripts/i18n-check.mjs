@@ -284,7 +284,13 @@ for (const locale of supportedLocales) {
         )
       : value === english;
     if (!isSame) continue;
-    if (allowlist.has(String(value))) continue;
+    // Match the allowlist against the ENGLISH pattern, not the translation.
+    // The value that arrives here is the rendered pattern with its placeholders
+    // intact — 'Ctx {window}' — so allowlisting the bare word 'Ctx' would never
+    // fire. The glossary documents terms that are deliberately the same in every
+    // language, so the English side is what it should name.
+    const englishPattern = isPlural(english) ? english.plural.other : english;
+    if (allowlist.has(String(englishPattern))) continue;
     if (isKeycapOnlyString(String(value))) continue;
     if (/^[A-Z]/.test(String(value)) && !/\s/.test(String(value))) continue;
     identical.push(key);
