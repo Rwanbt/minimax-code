@@ -1,3 +1,5 @@
+import { t } from '../../i18n/translate.js';
+import type { MessageKey } from '../../i18n/locales/index.js';
 import {
   getKeybindings,
   isKeyRelease,
@@ -53,7 +55,8 @@ export interface TuiKeybindingDefinition {
   readonly key: KeyId;
   readonly action: TuiShellKeyAction;
   readonly when: TuiKeybindingScope;
-  readonly description?: string;
+  /** Catalog key; see the note on KeybindingDefinition for why not a string. */
+  readonly descriptionKey?: MessageKey;
   readonly helpOrder?: number;
   readonly helpGroup?: string;
   readonly queueOnly?: boolean;
@@ -179,7 +182,7 @@ export class TuiKeybindingRegistry {
     return this.list()
       .filter(
         (binding) =>
-          binding.description &&
+          binding.descriptionKey &&
           binding.helpOrder !== undefined &&
           (queueEnabled || !binding.queueOnly),
       )
@@ -203,7 +206,7 @@ export class TuiKeybindingRegistry {
       rows.set(group, {
         ids: [binding.id],
         keys: this.keys(binding.id).map((key) => this.format(key)),
-        description: binding.description ?? '',
+        description: binding.descriptionKey ? t(binding.descriptionKey) : '',
         order: binding.helpOrder ?? 0,
       });
     }
@@ -267,7 +270,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+c',
     action: 'clear',
     when: 'composer',
-    description: 'Clear the Composer; press twice to exit',
+    descriptionKey: 'keybinding.clearComposer',
     helpOrder: 120,
   },
   {
@@ -275,7 +278,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'escape',
     action: 'interrupt',
     when: 'composer',
-    description: 'Close the current panel, or interrupt the active turn',
+    descriptionKey: 'keybinding.interruptOrClose',
     helpOrder: 110,
   },
   {
@@ -283,7 +286,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+d',
     action: 'exit',
     when: 'composer',
-    description: 'Exit when the Composer is empty',
+    descriptionKey: 'keybinding.exitWhenEmpty',
     helpOrder: 121,
   },
   {
@@ -291,7 +294,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+z',
     action: 'suspend',
     when: 'application',
-    description: 'Suspend MCode and return to the shell',
+    descriptionKey: 'keybinding.suspend',
     helpOrder: 122,
   },
   {
@@ -299,7 +302,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+/',
     action: 'toggle-side-session',
     when: 'application',
-    description: 'Toggle between the parent and temporary side conversation',
+    descriptionKey: 'keybinding.toggleSideSession',
     helpOrder: 123,
   },
   {
@@ -313,7 +316,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+v',
     action: 'paste-image',
     when: 'composer',
-    description: 'Paste an image or copied video file from the clipboard',
+    descriptionKey: 'keybinding.pasteMedia',
     helpOrder: 70,
   },
   {
@@ -327,7 +330,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'super+v',
     action: 'paste-image',
     when: 'composer',
-    description: 'Paste an image or copied video file from the clipboard',
+    descriptionKey: 'keybinding.pasteMedia',
     helpOrder: 70,
   },
   {
@@ -335,7 +338,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+g',
     action: 'open-external-editor',
     when: 'composer',
-    description: 'Search prompt history / edit in an external editor',
+    descriptionKey: 'keybinding.transcriptSearch',
     helpOrder: 50,
     helpGroup: 'composer.prompt-tools',
   },
@@ -344,7 +347,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+r',
     action: 'search-history',
     when: 'composer',
-    description: 'Search prompt history / edit in an external editor',
+    descriptionKey: 'keybinding.transcriptSearch',
     helpOrder: 40,
     helpGroup: 'composer.prompt-tools',
   },
@@ -353,7 +356,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'enter',
     action: 'submit-guidance',
     when: 'live-run',
-    description: 'Guide the current response with the current Draft',
+    descriptionKey: 'keybinding.guideWithDraft',
     helpOrder: 90,
   },
   {
@@ -361,7 +364,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'alt+enter',
     action: 'queue-draft',
     when: 'live-run',
-    description: 'Queue the current Draft for the next turn',
+    descriptionKey: 'keybinding.queueDraft',
     helpOrder: 91,
     queueOnly: true,
   },
@@ -370,7 +373,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'alt+up',
     action: 'restore-waiting',
     when: 'live-run',
-    description: 'Move the latest queued message back to the Composer',
+    descriptionKey: 'keybinding.restoreQueued',
     helpOrder: 92,
     helpGroup: 'run.restore-waiting',
     queueOnly: true,
@@ -380,7 +383,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'shift+left',
     action: 'restore-waiting',
     when: 'live-run',
-    description: 'Move the latest queued message back to the Composer',
+    descriptionKey: 'keybinding.restoreQueued',
     helpOrder: 92,
     helpGroup: 'run.restore-waiting',
     queueOnly: true,
@@ -390,7 +393,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+t',
     action: 'toggle-tasks',
     when: 'composer',
-    description: 'Show or hide the full Todo list',
+    descriptionKey: 'keybinding.showTodoList',
     helpOrder: 25,
   },
   {
@@ -398,7 +401,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+o',
     action: 'toggle-details',
     when: 'composer',
-    description: 'Show or hide Thinking, Tool output, and diffs',
+    descriptionKey: 'keybinding.toggleReasoning',
     helpOrder: 20,
   },
   {
@@ -406,7 +409,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'shift+tab',
     action: 'toggle-plan',
     when: 'composer',
-    description: 'Plan Mode: Default or Plan',
+    descriptionKey: 'keybinding.planMode',
     helpOrder: 10,
   },
   {
@@ -414,7 +417,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'alt+m',
     action: 'cycle-permission',
     when: 'composer',
-    description: 'Permission mode: Ask, Auto, Full access',
+    descriptionKey: 'keybinding.permissionMode',
     helpOrder: 11,
   },
   {
@@ -422,7 +425,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'ctrl+-',
     action: 'restore-draft',
     when: 'composer',
-    description: 'Undo the last Draft clear',
+    descriptionKey: 'keybinding.undoDraftClear',
     helpOrder: 60,
   },
   {
@@ -430,7 +433,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'pageUp',
     action: 'scroll-up',
     when: 'interaction',
-    description: 'Scroll the current interaction',
+    descriptionKey: 'keybinding.scrollInteraction',
     helpOrder: 80,
     helpGroup: 'interaction.navigation',
   },
@@ -439,7 +442,7 @@ const DEFAULT_TUI_KEYBINDINGS: readonly TuiKeybindingDefinition[] = [
     key: 'pageDown',
     action: 'scroll-down',
     when: 'interaction',
-    description: 'Scroll the current interaction',
+    descriptionKey: 'keybinding.scrollInteraction',
     helpOrder: 81,
     helpGroup: 'interaction.navigation',
   },
@@ -492,7 +495,7 @@ function resolveTuiHostKeybindingDefinitions(
         {
           ...definition,
           key: 'ctrl+v' as const,
-          description: 'Paste an image or copied video file from the clipboard',
+          descriptionKey: 'keybinding.pasteMedia' as const,
           helpOrder: 70,
           helpGroup: pasteHelpGroup,
         },
@@ -502,7 +505,7 @@ function resolveTuiHostKeybindingDefinitions(
       return [
         {
           ...definition,
-          description: 'Paste an image or copied video file from the clipboard',
+          descriptionKey: 'keybinding.pasteMedia' as const,
           helpOrder: 70,
           helpGroup: pasteHelpGroup,
         },
@@ -544,7 +547,7 @@ function toEngineKeybindingDefinitions(
   return Object.fromEntries(
     definitions.map((definition) => [
       definition.id,
-      { defaultKeys: definition.key, description: definition.description },
+      { defaultKeys: definition.key, descriptionKey: definition.descriptionKey },
     ]),
   );
 }

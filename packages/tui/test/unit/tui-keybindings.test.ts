@@ -232,10 +232,12 @@ describe("TUI shell keybindings", () => {
     expect(formatTuiKeybinding("composer.toggle-tasks", overridden)).toBe(
       "Ctrl+K",
     );
+    // `help()` yields definitions carrying a catalog key; `helpRows()` is the
+    // surface that resolves to the text the user actually reads.
     expect(
       overridden
-        .help()
-        .find((binding) => binding.id === "composer.toggle-tasks")?.description,
+        .helpRows()
+        .find((row) => row.ids.includes("composer.toggle-tasks"))?.description,
     ).toContain("Todo list");
   });
 

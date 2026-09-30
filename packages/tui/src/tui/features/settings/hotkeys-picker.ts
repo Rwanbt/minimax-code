@@ -1,3 +1,4 @@
+import { t } from '../../../i18n/translate.js';
 import { panelLayout } from '../../widgets/panel-frame.js';
 import { matchesKey, parseKey, type KeyId } from '../../engine/public.js';
 import type { Component } from '../../rendering/component.js';
@@ -105,12 +106,14 @@ export class TuiHotkeysPicker implements Component {
   private createList(): SelectList {
     const definitions = this.options.registry
       .list()
-      .filter((definition) => definition.description && definition.helpOrder !== undefined)
+      .filter((definition) => definition.descriptionKey && definition.helpOrder !== undefined)
       .sort((left, right) => (left.helpOrder ?? 0) - (right.helpOrder ?? 0));
     const items: SelectItem[] = definitions.map((definition) => ({
       value: definition.id,
       label: this.formatKeys(definition.id),
-      description: `${definition.id} · ${definition.description}`,
+      description: definition.descriptionKey
+        ? `${definition.id} · ${t(definition.descriptionKey)}`
+        : definition.id,
     }));
     const list = new SelectList(items, Math.min(Math.max(items.length, 1), 12), theme, {
       minPrimaryColumnWidth: 14,
