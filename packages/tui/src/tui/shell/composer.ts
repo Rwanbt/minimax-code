@@ -10,7 +10,7 @@ import {
   getDefaultTuiKeybindingRegistry,
   type TuiKeybindingRegistry,
 } from './keybindings.js';
-import { TUI_TIPS, selectTuiTipAt, type TuiTip } from './tips.js';
+import { getTuiTips, selectTuiTipAt, type TuiTip } from './tips.js';
 
 export type TuiComposerMode = 'message' | 'goal' | 'working' | 'follow-up' | 'blocked';
 
@@ -81,7 +81,7 @@ export class TuiComposer implements Component {
               this.options.supportsShiftEnter?.() === true,
               this.options.showTips !== false,
               this.options.now?.() ?? Date.now(),
-              this.options.tips ?? TUI_TIPS,
+              this.options.tips ?? getTuiTips(),
               this.options.keybindings,
             )}`,
             safeWidth,

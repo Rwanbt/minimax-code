@@ -1,5 +1,11 @@
+import { t } from '../../i18n/translate.js';
+import { onLocaleChanged, getActiveLocale } from '../../i18n/context.js';
+import type { SupportedLocale } from '../../i18n/schema.js';
+import type { MessageKey } from '../../i18n/locales/index.js';
+
 export interface TuiTip {
   readonly id: string;
+  /** Invariant: the slash command this tip advertises. Users type it. */
   readonly command: string;
   readonly text: string;
   readonly shortText: string;
@@ -9,89 +15,117 @@ export interface TuiTip {
 interface TuiTipDefinition {
   readonly id: string;
   readonly command: string;
-  readonly text: string;
-  readonly shortText: string;
+  readonly textKey: MessageKey;
+  readonly shortTextKey: MessageKey;
   readonly weight?: number;
 }
 
+/**
+ * Tips hold keys, not text, because the previous version exported a
+ * module-level `TUI_TIPS` const built from English strings. A `t()` call there
+ * would have fixed the language at import time, so the composer would keep
+ * showing English tips after the user switched.
+ *
+ * Every translation must keep the `/command` substring: the tip exists to
+ * advertise that command, and dropping it would leave a sentence with nothing
+ * actionable in it. The i18n test enforces that.
+ */
 const TUI_TIP_DEFINITIONS: readonly TuiTipDefinition[] = [
   {
     id: 'goal',
     command: 'goal',
-    text: 'Tip: /goal keeps multi-step work focused on a finish line',
-    shortText: 'Tip: /goal tracks multi-step work',
+    textKey: 'tip.goal.text',
+    shortTextKey: 'tip.goal.short',
     weight: 2,
   },
   {
     id: 'context',
     command: 'context',
-    text: 'Tip: /context shows the current Session context budget',
-    shortText: 'Tip: /context shows context',
+    textKey: 'tip.context.text',
+    shortTextKey: 'tip.context.short',
     weight: 2,
   },
   {
     id: 'steer',
     command: 'steer',
-    text: 'Tip: /steer guides a response without interrupting it',
-    shortText: 'Tip: /steer guides a live run',
+    textKey: 'tip.steer.text',
+    shortTextKey: 'tip.steer.short',
     weight: 2,
   },
   {
     id: 'plugins',
     command: 'plugins',
-    text: 'Tip: /plugins manages installed capabilities',
-    shortText: 'Tip: /plugins manages Plugins',
+    textKey: 'tip.plugins.text',
+    shortTextKey: 'tip.plugins.short',
     weight: 2,
   },
   {
     id: 'sessions',
     command: 'sessions',
-    text: 'Tip: /sessions resumes earlier conversations',
-    shortText: 'Tip: /sessions resumes work',
+    textKey: 'tip.sessions.text',
+    shortTextKey: 'tip.sessions.short',
   },
   {
     id: 'fork',
     command: 'fork',
-    text: 'Tip: /fork branches the current conversation',
-    shortText: 'Tip: /fork branches a Session',
+    textKey: 'tip.fork.text',
+    shortTextKey: 'tip.fork.short',
   },
   {
     id: 'rewind',
     command: 'rewind',
-    text: 'Tip: /rewind restores an earlier turn',
-    shortText: 'Tip: /rewind restores a turn',
+    textKey: 'tip.rewind.text',
+    shortTextKey: 'tip.rewind.short',
   },
   {
     id: 'compact',
     command: 'compact',
-    text: 'Tip: /compact frees context in a long conversation',
-    shortText: 'Tip: /compact frees context',
+    textKey: 'tip.compact.text',
+    shortTextKey: 'tip.compact.short',
   },
   {
     id: 'skills',
     command: 'skills',
-    text: 'Tip: /skills lists available Skills',
-    shortText: 'Tip: /skills lists Skills',
+    textKey: 'tip.skills.text',
+    shortTextKey: 'tip.skills.short',
   },
   {
     id: 'feedback',
     command: 'feedback',
-    text: 'Tip: /feedback previews redacted feedback before upload',
-    shortText: 'Tip: /feedback previews reports',
+    textKey: 'tip.feedback.text',
+    shortTextKey: 'tip.feedback.short',
   },
 ];
 
-export function buildTuiTips(): readonly TuiTip[] {
+export function buildTuiTips(locale?: SupportedLocale): readonly TuiTip[] {
+  const target = locale ?? getActiveLocale();
   return TUI_TIP_DEFINITIONS.map((tip) => ({
     id: tip.id,
     command: tip.command,
-    text: tip.text,
-    shortText: tip.shortText,
+    text: t(tip.textKey, target),
+    shortText: t(tip.shortTextKey, target),
     ...(tip.weight === undefined ? {} : { weight: tip.weight }),
   }));
 }
 
-export const TUI_TIPS = buildTuiTips();
+const tipsCache = new Map<SupportedLocale, readonly TuiTip[]>();
+
+/** Tips for the active locale, memoised. Follows a language switch. */
+export function getTuiTips(locale: SupportedLocale = getActiveLocale()): readonly TuiTip[] {
+  const cached = tipsCache.get(locale);
+  if (cached) return cached;
+  const built = buildTuiTips(locale);
+  tipsCache.set(locale, built);
+  return built;
+}
+
+export function invalidateTuiTipsCache(): void {
+  tipsCache.clear();
+  rotationCache.clear();
+}
+
+// A language switch must not leave stale tips behind.
+onLocaleChanged(invalidateTuiTipsCache);
 
 export const TUI_TIP_ROTATION_INTERVAL_MS = 30_000;
 
@@ -119,13 +153,23 @@ export function buildWeightedTuiTipRotation(tips: readonly TuiTip[]): readonly T
   return rotation;
 }
 
-const DEFAULT_TUI_TIP_ROTATION = buildWeightedTuiTipRotation(TUI_TIPS);
+const rotationCache = new Map<SupportedLocale, readonly TuiTip[]>();
+
+function rotationFor(tips: readonly TuiTip[]): readonly TuiTip[] {
+  const locale = getActiveLocale();
+  const cached = rotationCache.get(locale);
+  // Only reuse the memo when the caller passed the default set for this locale.
+  if (cached && tips === getTuiTips(locale)) return cached;
+  const built = buildWeightedTuiTipRotation(tips);
+  rotationCache.set(locale, built);
+  return built;
+}
 
 export function selectTuiTipAt(
   nowMs: number,
-  tips: readonly TuiTip[] = TUI_TIPS,
+  tips: readonly TuiTip[] = getTuiTips(),
 ): TuiTip | undefined {
-  const rotation = tips === TUI_TIPS ? DEFAULT_TUI_TIP_ROTATION : buildWeightedTuiTipRotation(tips);
+  const rotation = rotationFor(tips);
   if (rotation.length === 0) return undefined;
 
   const bucket = Math.floor(nowMs / TUI_TIP_ROTATION_INTERVAL_MS);

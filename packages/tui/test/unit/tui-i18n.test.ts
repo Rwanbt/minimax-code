@@ -13,6 +13,11 @@ import {
 } from '../../src/i18n/context.js';
 import { pseudoLocalize, pseudoCatalog } from '../../src/i18n/pseudo-locale.js';
 import { getTuiCommands } from '../../src/tui/commands/catalog.js';
+import { getTuiTips, buildTuiTips } from '../../src/tui/shell/tips.js';
+import {
+  resolveTranscriptToolDefinition,
+  transcriptToolAction,
+} from '../../src/tui/transcript/tool-definitions.js';
 import type { SupportedLocale } from '../../src/i18n/schema.js';
 import { findForbiddenCharacters, isPluralMessage, requiredPluralCategories } from '../../src/i18n/schema.js';
 import { ELLIPSIS } from '../../src/i18n/format.js';
@@ -343,3 +348,62 @@ describe('slash-command catalog follows the active locale', () => {
     expect(getTuiCommands()).not.toBe(first)
   })
 })
+// ── invariant tokens inside translated text ─────────────────────────────────
+
+describe('invariant tokens survive translation', () => {
+  /**
+   * Two surfaces embed an identifier inside a sentence the user reads, and both
+   * depend on that identifier still being there after translation:
+   *
+   *  - the transcript bolds a tool name by locating it with indexOf, so a
+   *    translation that dropped the name would silently stop colouring it;
+   *  - a tip exists to advertise a slash command, so a translation without the
+   *    command leaves a sentence with nothing actionable in it.
+   *
+   * Neither is a placeholder, so i18n-check cannot catch it. These tests can.
+   */
+  const LOCALES = ['en', 'zh-Hans', 'fr'] as const;
+
+  it.each(LOCALES)('keeps the tool name inside the action sentence (%s)', (locale) => {
+    const cases: readonly { readonly tool: string; readonly accent: string }[] = [
+      { tool: 'web_search', accent: 'WebSearch' },
+      { tool: 'web_fetch', accent: 'WebFetch' },
+    ];
+    for (const { tool, accent } of cases) {
+      const definition = resolveTranscriptToolDefinition(tool);
+      expect(definition, tool).toBeDefined();
+      for (const phase of ['running', 'completed', 'failed'] as const) {
+        const action = transcriptToolAction(definition!, phase, locale);
+        expect(action, `${locale} ${tool} ${phase}`).toContain(accent);
+      }
+    }
+  });
+
+  it.each(LOCALES)('keeps the slash command inside the tip (%s)', (locale) => {
+    for (const tip of buildTuiTips(locale)) {
+      const command = `/${tip.command}`;
+      expect(tip.text, `${locale} ${tip.id}.text`).toContain(command);
+      expect(tip.shortText, `${locale} ${tip.id}.short`).toContain(command);
+    }
+  });
+
+  it('translates the tip body while keeping the command', () => {
+    const english = buildTuiTips('en').find((tip) => tip.id === 'goal');
+    const french = buildTuiTips('fr').find((tip) => tip.id === 'goal');
+    expect(english).toBeDefined();
+    expect(french).toBeDefined();
+    expect(french!.text).not.toBe(english!.text);
+    expect(french!.text).toContain('/goal');
+  });
+
+  it('serves tips for the active locale and drops them on a switch', () => {
+    setActiveLocale('en');
+    const english = getTuiTips();
+    setActiveLocale('fr');
+    const french = getTuiTips();
+    expect(french).not.toBe(english);
+    expect(french[0]?.text).not.toBe(english[0]?.text);
+    setActiveLocale('en');
+    expect(getTuiTips()).not.toBe(french);
+  });
+});

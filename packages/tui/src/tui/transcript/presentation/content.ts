@@ -2,7 +2,11 @@ import { formatTuiDuration } from '../../rendering/duration.js';
 import { sanitizeTerminalText } from '../../rendering/terminal-text.js';
 import { formatTuiToolSummary } from './tool-summary.js';
 import type { TranscriptCell } from '../model.js';
-import { normalizeToolName, resolveTranscriptToolDefinition } from '../tool-definitions.js';
+import {
+  normalizeToolName,
+  resolveTranscriptToolDefinition,
+  transcriptToolAction,
+} from '../tool-definitions.js';
 
 export type TranscriptPresentationTone = 'neutral' | 'accent' | 'success' | 'warning' | 'error';
 
@@ -60,9 +64,10 @@ function transcriptCellTitle(cell: TranscriptCell): string {
   if (cell.kind === 'tool') {
     const definition = resolveTranscriptToolDefinition(cell.title);
     if (definition) {
-      return cell.status === 'running' || cell.status === 'pending'
-        ? definition.runningAction
-        : definition.completedAction;
+      return transcriptToolAction(
+        definition,
+        cell.status === 'running' || cell.status === 'pending' ? 'running' : 'completed',
+      );
     }
     return titleCase(normalizeToolName(cell.title));
   }

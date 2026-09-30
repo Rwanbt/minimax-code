@@ -17,6 +17,7 @@ import {
 } from './projection-window.js';
 import {
   formatTranscriptToolIdentity,
+  transcriptToolAction,
   normalizeToolName,
   resolveTranscriptToolDefinition,
   resolveTranscriptToolFailedAction,
@@ -1275,9 +1276,7 @@ function formatToolAction(
     const action =
       status === 'failed'
         ? resolveTranscriptToolFailedAction(definition, toolErrorCode)
-        : running
-          ? definition.runningAction
-          : definition.completedAction;
+        : transcriptToolAction(definition, running ? 'running' : 'completed');
     const identity = formatTranscriptToolIdentity(normalized, definition);
     return identity ? `${action} ${identity}` : action;
   }
