@@ -16,7 +16,7 @@ import {
   sessionMutationTemplate,
   sessionMutationText,
 } from '../../src/tui/features/session-mutation/copy.js';
-import { stripAnsi } from '../../src/tui/rendering/text.js';
+import { stripAnsi, visibleWidth } from '../../src/tui/rendering/text.js';
 import type {
   TuiRewindPreview,
   TuiSessionInputSummary,
@@ -49,8 +49,10 @@ describe('formatSessionInputSummaryLabel', () => {
       { nowMs: NOW_MS },
     );
 
-    expect(label.title).toContain('Investigate flaky login tests');
-    expect(label.title).toMatch(/\u2026$/u);
+    expect(stripAnsi(label.title)).toContain('Investigate flaky login tests');
+    // `truncateToWidth` wraps the ellipsis in SGR resets, so the marker is not
+    // the last code unit of the string. Assert on what the terminal shows.
+    expect(stripAnsi(label.title)).toMatch(/\u2026$/u);
     expect(label.subtitle).toMatch(/2 files/u);
     expect(label.subtitle).toMatch(/5m/u);
     expect(label.subtitle).toMatch(/assistant replied/u);
@@ -194,8 +196,28 @@ describe('TuiSessionMutationHistoryPicker', () => {
   it('does not split an emoji at the prompt-head boundary', () => {
     const head = `${'a'.repeat(46)}😀z`;
 
-    expect(formatPromptHead(head, 48)).toBe(head);
-    expect(formatPromptHead(`${head}tail`, 48)).not.toContain('\uFFFD');
+    // Assert the two properties that matter rather than an exact string.
+    //
+    // The previous version asserted `toBe(head)`, which passed only because the
+    // author happened to pick a head that is 48 code points AND 49 terminal
+    // cells. It therefore pinned code-point counting as the contract — and
+    // code-point counting is the bug: an emoji is two cells wide, so a head that
+    // fits by code points overflows its column by one cell.
+    //
+    // The real requirements are that no grapheme is ever cut, and that the result
+    // never exceeds the budget it was given.
+    const fitted = formatPromptHead(head, 48);
+    expect(stripAnsi(fitted)).not.toContain('\uFFFD');
+    expect(visibleWidth(fitted)).toBeLessThanOrEqual(48);
+
+    // A head that genuinely fits is returned untouched.
+    const short = 'a short head';
+    expect(formatPromptHead(short, 48)).toBe(short);
+
+    // And a longer one is cut with a marker, never mid-cluster.
+    const truncated = stripAnsi(formatPromptHead(`${head}tail`, 48));
+    expect(truncated).not.toContain('\uFFFD');
+    expect(truncated.endsWith('\u2026')).toBe(true);
   });
 
   it('renders a safe empty state when there are no summaries', () => {

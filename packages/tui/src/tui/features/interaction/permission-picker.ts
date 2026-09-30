@@ -4,6 +4,7 @@ import { truncateToWidth, visibleWidth } from '../../rendering/text.js';
 import { Input } from '../../widgets/input.js';
 import { SelectList, type SelectListTheme } from '../../widgets/select-list.js';
 import { sanitizeTerminalText } from '../../rendering/terminal-text.js';
+import { ELLIPSIS } from '../../../i18n/format.js';
 import type { TuiPendingPermission, TuiPermissionDecision } from '../../../runtime/port.js';
 import {
   renderTuiActionHint,
@@ -664,16 +665,23 @@ function renderPermissionRules(request: TuiPendingPermission, width: number): st
 
 function renderPermissionRows(label: string, values: readonly string[], width: number): string[] {
   const labelWidth = Math.min(12, Math.max(4, Math.floor(width / 3)));
-  const plainPrefix = `  ${label.slice(0, labelWidth).padEnd(labelWidth)} `;
-  const bodyWidth = Math.max(1, width - plainPrefix.length);
+  // Truncate with an explicit ellipsis rather than slicing code units. `slice` cut
+  // mid-word and mid-grapheme with no marker at all, so a longer translation just
+  // looked like a typo. The previous English label "Scope" fitted, which is
+  // exactly why this survived until the catalog made labels longer.
+  const fittedLabel = truncateToWidth(label, labelWidth, ELLIPSIS);
+  // `padEnd` counts code units and would over-pad a label containing an
+  // accented or East Asian character; visibleWidth counts cells, which is what
+  // the column is measured in.
+  const paddedLabel = fittedLabel + ' '.repeat(Math.max(0, labelWidth - visibleWidth(fittedLabel)));
+  const plainPrefix = `  ${paddedLabel} `;
+  const bodyWidth = Math.max(1, width - visibleWidth(plainPrefix));
   const bodyLines = values.flatMap((value) =>
     new Text(chalk.hex(colors.text)(sanitizeTerminalText(value)), 0, 0).render(bodyWidth),
   );
   return bodyLines.map((line, index) => {
     const prefix =
-      index === 0
-        ? `  ${chalk.bold.hex(colors.muted)(label.slice(0, labelWidth).padEnd(labelWidth))} `
-        : ' '.repeat(plainPrefix.length);
+      index === 0 ? `  ${chalk.bold.hex(colors.muted)(paddedLabel)} ` : ' '.repeat(plainPrefix.length);
     return fitLine(`${prefix}${line}`, width);
   });
 }

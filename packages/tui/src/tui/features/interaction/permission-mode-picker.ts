@@ -110,6 +110,15 @@ function renderMode(
     : mode === 'bypassPermissions'
       ? colors.error
       : colors.text;
+  // The compact permission codes stay English in every locale: they are four
+  // characters wide by contract, sit in a fixed four-column grid, and are the
+  // words a user repeats to other people. Translating them would both widen the
+  // column and make the mode harder to name out loud. The long label beside
+  // them is what gets translated.
+  //
+  // `padEnd` is safe here precisely because of that invariant, and the i18n test
+  // asserts every code is at most four cells so a future edit cannot widen the
+  // column silently — padEnd would then misalign the grid without erroring.
   const label = (options.focused ? chalk.bold : chalk).hex(labelColor)(
     formatTuiPermissionModeCompact(mode).padEnd(4),
   );

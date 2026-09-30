@@ -123,8 +123,13 @@ function renderMode(
   },
 ): string[] {
   const prefix = options.focused ? chalk.bold.hex(colors.signal)('›') : ' ';
+  // Pad by cells, not by code units: "Fullscreen" is exactly ten characters, so
+  // a French "Plein écran" overflows the column by one and pushes the "● current"
+  // marker out of alignment. Pad to the width instead of assuming the text
+  // already fits, and let the layout absorb the difference.
+  const modeLabel = formatTuiMode(mode);
   const label = (options.focused ? chalk.bold.hex(colors.signal) : chalk.hex(colors.text))(
-    formatTuiMode(mode).padEnd(10),
+    `${modeLabel}${' '.repeat(Math.max(0, 10 - visibleWidth(modeLabel)))}`,
   );
   const status = options.active ? chalk.hex(colors.signal)('● current') : '';
   const description = chalk.hex(colors.muted)(TUI_MODE_DESCRIPTIONS[mode]);

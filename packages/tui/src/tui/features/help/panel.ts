@@ -1,7 +1,8 @@
 import { panelLayout } from '../../widgets/panel-frame.js';
 import { decodePrintableKey, matchesKey } from '../../engine/public.js';
 import type { Component } from '../../rendering/component.js';
-import { truncateToWidth } from '../../rendering/text.js';
+import { truncateToWidth, visibleWidth } from '../../rendering/text.js';
+import { ELLIPSIS } from '../../../i18n/format.js';
 import {
   formatTuiCommandUsage,
   isTuiCommandDiscoverable,
@@ -167,7 +168,12 @@ export class TuiHelpPanel implements Component {
 }
 
 function columnWidth(labels: readonly string[], width: number, minimum: number): number {
-  const longest = Math.max(minimum, ...labels.map((label) => label.length));
+  // visibleWidth counts terminal cells; `.length` counts UTF-16 code units. For
+  // English they agree, which is why this survived. They do not agree for a
+  // French label with an accent (same cell count, one code unit more than the
+  // ASCII baseline) nor for Japanese, where each character is two cells — the
+  // first gives a column one unit too narrow, the second gives one far too wide.
+  const longest = Math.max(minimum, ...labels.map((label) => visibleWidth(label)));
   const available = Math.max(minimum, width - 6);
   return Math.min(longest, Math.max(minimum, Math.floor(available * 0.4)));
 }
@@ -179,8 +185,10 @@ function formatHelpRow(
   width: number,
   colorLabel: (value: string) => string,
 ): string {
-  const fittedLabel = truncateToWidth(label, labelWidth, '…');
-  const paddedLabel = `${fittedLabel}${' '.repeat(Math.max(0, labelWidth - fittedLabel.length))}`;
+  const fittedLabel = truncateToWidth(label, labelWidth, ELLIPSIS);
+  // Pad by cells, not by code units, or an accented or CJK label under-fills
+  // the column and shifts every description to its left.
+  const paddedLabel = `${fittedLabel}${' '.repeat(Math.max(0, labelWidth - visibleWidth(fittedLabel)))}`;
   return truncateToWidth(
     `    ${colorLabel(paddedLabel)}  ${chalk.hex(colors.muted)(description)}`,
     width,

@@ -3313,6 +3313,7 @@
     "packages/tui/test/unit/tui-engine-local-deltas.test.ts",
     "packages/tui/test/unit/tui-feature-viewport-contract.test.ts",
     "packages/tui/test/unit/tui-goal-banner.test.ts",
+    "packages/tui/test/unit/tui-i18n-width-matrix.test.ts",
     "packages/tui/test/unit/tui-i18n.test.ts",
     "packages/tui/test/unit/tui-image-preview.test.ts",
     "packages/tui/test/unit/tui-ime-cursor.test.ts",

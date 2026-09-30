@@ -1,6 +1,8 @@
 import { formatProductTime } from '@mavis/shared/product-time';
 import type { TuiSessionInputSummary } from '../../../runtime/port.js';
 import { sessionMutationLocale, sessionMutationTemplate, sessionMutationText } from './copy.js';
+import { truncateToWidth } from '../../rendering/text.js';
+import { ELLIPSIS } from '../../../i18n/format.js';
 
 /**
  * Display-side formatters shared by the session-mutation picker and preview
@@ -39,14 +41,12 @@ export function formatPromptHead(head: string | undefined, maxWidth: number): st
   const limit = Math.max(8, Math.floor(maxWidth));
   const normalized = (head ?? '').replace(/\s+/gu, ' ').trim();
   if (!normalized) return sessionMutationText('sessionMutation.format.noPrompt');
-  const codePoints = [...normalized];
-  if (codePoints.length <= limit) return normalized;
-  // Reserve a single character for the ellipsis so the row stays predictable.
-  const slice = codePoints
-    .slice(0, Math.max(0, limit - 1))
-    .join('')
-    .trimEnd();
-  return `${slice}\u2026`;
+  // Terminal cells, not code points. A budget of 48 cells holds 48 Latin
+  // characters but only 24 Japanese ones, so counting code points made a CJK
+  // head twice as wide as the row could hold and spill into the neighbouring
+  // column. truncateToWidth also reserves the ellipsis and never cuts a
+  // grapheme cluster in half, which the manual slice did.
+  return truncateToWidth(normalized, limit, ELLIPSIS);
 }
 
 export function summarizeFileChangeCount(count: number, locale = sessionMutationLocale()): string {
