@@ -358,6 +358,16 @@
       "value": "/context · /feedback",
       "reason": "two slash commands and a separator, no prose; commands are invariant",
       "family": "welcome.compact.news"
+    },
+    {
+      "value": "arguments",
+      "reason": "same word in French; a qualifier on the command intent label",
+      "family": "composer.qualifier"
+    },
+    {
+      "value": "instructions",
+      "reason": "same word in French; a qualifier on the skill intent label",
+      "family": "composer.qualifier"
     }
   ]
 }

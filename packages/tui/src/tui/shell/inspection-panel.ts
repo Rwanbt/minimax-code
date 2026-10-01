@@ -4,6 +4,7 @@ import type { Component, Focusable } from '../rendering/component.js';
 import { truncateToWidth, visibleWidth, wrapTextWithAnsi } from '../rendering/text.js';
 import { sanitizeTerminalText } from '../rendering/terminal-text.js';
 import { tuiChalk as chalk, tuiColors as colors } from '../theme/runtime.js';
+import { t, tPlural, tpl } from '../../i18n/translate.js';
 
 export type TuiInspectionTone = 'neutral' | 'accent' | 'success' | 'warning' | 'error';
 
@@ -90,8 +91,11 @@ export class TuiInspectionPanel implements Component, Focusable {
   }
 
   renderViewport(width: number, height?: number): string[] {
-    const base = flatten(this.options.footer ?? 'Esc close');
-    const footer = width < 44 ? `↑↓ scroll · ${base}` : `↑↓ / PgUp/PgDn scroll · ${base}`;
+    const base = flatten(this.options.footer ?? t('inspection.footer.close'));
+    const footer =
+      width < 44
+        ? tpl('inspection.hint.scrollCompact', { base })
+        : tpl('inspection.hint.scrollFull', { base });
     const initial = panelLayout(width, height, footer);
     const body = this.renderBody(initial.contentWidth + 4, height !== undefined && height <= 12);
     const scrollable = body.length > initial.bodyHeight;
@@ -297,7 +301,7 @@ function renderRowDetail(row: TuiInspectionRow, width: number): string[] {
 function inspectionWarnings(warnings: readonly string[] | undefined): string[] {
   const sanitized = (warnings ?? []).map((warning) => flatten(warning)).filter(Boolean);
   return sanitized.length > 3
-    ? [...sanitized.slice(0, 3), `+${sanitized.length - 3} more warning(s)`]
+    ? [...sanitized.slice(0, 3), tPlural('inspection.warnings.more', sanitized.length - 3)]
     : sanitized;
 }
 
