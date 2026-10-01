@@ -8,14 +8,16 @@ import { getKeybindings, matchesKey } from '../../engine/public.js';
 import type { Component } from '../../rendering/component.js';
 import { truncateToWidth, visibleWidth } from '../../rendering/text.js';
 import { tuiChalk as chalk, tuiColors as colors } from '../../theme/runtime.js';
+import { t } from '../../../i18n/translate.js';
+import type { MessageKey } from '../../../i18n/locales/index.js';
 import { questionnaireFrameContentWidth, renderQuestionnaireFrame } from './decision-frame.js';
 
 type VisiblePermissionMode = (typeof MINIMAX_CODE_PERMISSION_MODES)[number];
 
-const PERMISSION_MODE_DESCRIPTIONS: Record<VisiblePermissionMode, string> = {
-  default: 'Confirm sensitive actions',
-  auto: 'Ask only when risk is high',
-  bypassPermissions: 'Run without confirmation',
+const PERMISSION_MODE_DESCRIPTIONS: Record<VisiblePermissionMode, MessageKey> = {
+  default: 'permission.policy.confirmSensitive',
+  auto: 'permission.policy.askHighRisk',
+  bypassPermissions: 'permission.policy.runFree',
 };
 
 export class TuiPermissionModePicker implements Component {
@@ -74,7 +76,7 @@ export class TuiPermissionModePicker implements Component {
         ...(safeWidth >= 42 ? { meta: `Current · ${currentMode}` } : {}),
         body: [
           chalk.hex(colors.muted)(
-            compact ? 'Choose a tool access policy.' : 'Choose how MCode handles tool access.',
+            t(compact ? 'permission.picker.choosePolicyCompact' : 'permission.picker.choosePolicy'),
           ),
           '',
           ...MINIMAX_CODE_PERMISSION_MODES.flatMap((mode, index) =>
@@ -86,8 +88,7 @@ export class TuiPermissionModePicker implements Component {
             }),
           ),
         ],
-        footer:
-          safeWidth < 42 ? '↑/↓ move · Enter · Esc back' : '↑/↓ select · Enter apply · Esc cancel',
+        footer: t(compact ? 'permission.picker.hintCompact' : 'permission.picker.hint'),
       },
       safeWidth,
       'signal',
@@ -124,11 +125,13 @@ function renderMode(
   );
   const status = [
     mode === 'bypassPermissions' ? chalk.hex(colors.error)('⚠') : '',
-    options.active ? chalk.hex(colors.signal)('● active') : '',
+    // The bullet is a status marker, so the renderer owns it and the catalog
+    // carries only the word.
+    options.active ? chalk.hex(colors.signal)(`● ${t('permission.picker.active')}`) : '',
   ]
     .filter(Boolean)
     .join(' ');
-  const description = chalk.hex(colors.muted)(PERMISSION_MODE_DESCRIPTIONS[mode]);
+  const description = chalk.hex(colors.muted)(t(PERMISSION_MODE_DESCRIPTIONS[mode]));
   const heading = `${prefix} ${label}`;
 
   if (options.compact) {

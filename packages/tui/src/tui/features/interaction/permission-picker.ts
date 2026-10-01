@@ -5,6 +5,8 @@ import { Input } from '../../widgets/input.js';
 import { SelectList, type SelectListTheme } from '../../widgets/select-list.js';
 import { sanitizeTerminalText } from '../../rendering/terminal-text.js';
 import { ELLIPSIS } from '../../../i18n/format.js';
+import { t } from '../../../i18n/translate.js';
+import type { MessageKey } from '../../../i18n/locales/index.js';
 import type { TuiPendingPermission, TuiPermissionDecision } from '../../../runtime/port.js';
 import {
   renderTuiActionHint,
@@ -80,30 +82,28 @@ export class TuiPermissionPicker implements Component, Focusable {
     private readonly onSelect: (decision: TuiPermissionDecision, feedback?: string) => void,
     private readonly onStop: () => void,
   ) {
+    // The leading digit is a list marker, not copy, and it used to be hardcoded
+    // as '1' / '2' / '3' — so the numbering silently went wrong whenever the
+    // list changed shape. It is computed from the position now, and only the
+    // words are translated.
+    const allowAlways = request.allowAlwaysSupported !== false;
+    const decisionSpecs: ReadonlyArray<{
+      readonly value: TuiPermissionDecision;
+      readonly labelKey: MessageKey;
+    }> = [
+      { value: 'allowOnce', labelKey: 'permission.decision.allowOnce' },
+      ...(allowAlways
+        ? [{ value: 'allowAlways' as const, labelKey: 'permission.decision.allowAlways' as const }]
+        : []),
+      { value: 'deny', labelKey: 'permission.decision.deny' },
+    ];
     const decisions: Array<{
       value: TuiPermissionDecision;
       label: string;
-    }> = [
-      {
-        value: 'allowOnce',
-        label: '1 Allow for this conversation',
-      },
-      ...(request.allowAlwaysSupported === false
-        ? []
-        : [
-            {
-              value: 'allowAlways' as const,
-              label: '2 Always allow matching actions',
-            },
-          ]),
-      {
-        value: 'deny',
-        label:
-          request.allowAlwaysSupported === false
-            ? '2 Deny and guide MCode'
-            : '3 Deny and guide MCode',
-      },
-    ];
+    }> = decisionSpecs.map((spec, index) => ({
+      value: spec.value,
+      label: `${index + 1} ${t(spec.labelKey)}`,
+    }));
     this.decisions = decisions.map((item) => item.value);
     this.list = new SelectList(decisions, decisions.length, permissionSelectTheme(), {
       minPrimaryColumnWidth: 22,
